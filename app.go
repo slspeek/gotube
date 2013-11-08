@@ -2,17 +2,65 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/slspeek/crudapi"
+	"github.com/slspeek/crudapi/storage/mongo"
+	"github.com/slspeek/go_httpauth"
 	"github.com/slspeek/goblob"
+	"github.com/slspeek/flowgo"
 	"html/template"
 	"io"
 	"labix.org/v2/mgo"
 	"log"
 	"net/http"
+	"os"
 )
 
-var rootTemplate = template.Must(template.New("root").Parse(rootTemplateHTML))
+type MyGuard struct {
+	BasicAuth *go_httpauth.BasicServer
+}
 
-var sess mgo.Session
+func NewMyGuard() MyGuard {
+	return MyGuard{go_httpauth.NewBasic("MyRealm", func(user string, realm string) string {
+		// Replace this with a real lookup function here
+		return "ape"
+	})}
+}
+
+func (g MyGuard) Authenticate(resp http.ResponseWriter, req *http.Request) (bool, string, string) {
+	auth, username := g.BasicAuth.Auth(resp, req)
+	log.Println("allowed:", auth, "username:", username)
+	return auth, username, ""
+}
+
+func (g MyGuard) Authorize(client string, action crudapi.Action, urlVars map[string]string) (ok bool, errorMessage string) {
+	log.Println("urlVars:", urlVars, "client:", client, "Action:", action)
+	return true, ""
+}
+
+func hello(resp http.ResponseWriter, req *http.Request) {
+	resp.Write([]byte("Hello there!"))
+}
+
+func storage() *mongo.MongoStorage {
+	s, err := mgo.Dial("localhost")
+	if err != nil {
+		panic(err)
+	}
+	return mongo.NewMongoStorage(s, "test")
+}
+
+func uploadHandler() *flow.UploadHandler {
+  bs, err := goblob.NewBlobService("localhost", "test", "flow")
+  if err != nil {
+    panic("No blobservice could be created")
+  }
+	return flow.NewUploadHandler(bs, func(w http.ResponseWriter, r *http.Request, blobId string) {
+    log.Println("Upload completed: ", blobId)
+  })
+}
+
+var rootTemplate = template.Must(template.New("root").Parse(rootTemplateHTML))
 
 const rootTemplateHTML = `
 <html><body>
@@ -48,55 +96,56 @@ func handleServe(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleUpload(w http.ResponseWriter, r *http.Request) {
-	log.Print("Upload")
-	reader, err := r.MultipartReader()
+	log.Print("Upload ", r)
+	//reader, err := r.MultipartReader()
+	//if err != nil {
+	//fmt.Println(err)
+	//http.Error(w, "not a form", http.StatusBadRequest)
+	//}
+	f, _, err := r.FormFile("file")
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "not a form", http.StatusBadRequest)
 	}
+	err = r.ParseForm()
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "not a form", http.StatusBadRequest)
+	}
+
+	fmt.Println("Form: ", r.Form)
 	defer r.Body.Close()
 
-	filename := ""
-	// read part by part
-	for {
-		part, err := reader.NextPart()
-		if err != nil {
-			if err == io.EOF {
-				// end of parts
-				break
-			}
-			fmt.Println(err)
-			http.Error(w, "bad form part", http.StatusBadRequest)
-		}
-		// use part.Read to read content
-		// then
-		if part.FormName() == "file" {
-			bs, err := goblob.NewBlobService("localhost", "test", "fs")
-			if err != nil {
-				panic(err)
-			}
-			filename = part.FileName()
-			fmt.Println("filename: ", part.FileName())
-			fmt.Println("formname: ", part.FormName())
-			gf, err := bs.Create(filename)
-			if err != nil {
-				panic(err)
-			}
-			_, err = io.Copy(gf, part)
-			if err != nil {
-				panic(err)
-			}
-			gf.Close()
-			bs.Close()
-		}
-		part.Close()
+	bs, err := goblob.NewBlobService("localhost", "test", "fs")
+	if err != nil {
+		panic(err)
 	}
-	http.Redirect(w, r, "/serve/?filename="+filename, http.StatusFound)
+	gf, err := bs.Create(r.URL.Query().Get("flowFilename"))
+	if err != nil {
+		panic(err)
+	}
+	_, err = io.Copy(gf, f)
+	if err != nil {
+		panic(err)
+	}
+	gf.Close()
+	bs.Close()
+	//http.Redirect(w, r, "/serve/?filename="+filename, http.StatusFound)
 }
 
 func main() {
-	http.HandleFunc("/", handleRoot)
-	http.HandleFunc("/serve/", handleServe)
-	http.HandleFunc("/upload", handleUpload)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	// storage
+	s := storage()
+	// router
+	r := mux.NewRouter()
+
+	r.HandleFunc("/form", handleRoot)
+	r.HandleFunc("/serve", handleServe)
+	r.Handle("/upload", uploadHandler())
+	// mounting the API
+	crudapi.MountAPI(r.PathPrefix("/api").Subrouter(), s, NewMyGuard())
+
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir(os.Args[1])))
+	log.Fatal(http.ListenAndServe(":8080", r))
 }

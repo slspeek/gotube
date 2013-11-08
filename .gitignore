@@ -1,5 +1,7 @@
 node_modules
+web/npm-debug.log
 bower_components
 src
 pkg
 *~
+*.swp
