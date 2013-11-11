@@ -1,15 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/slspeek/crudapi"
 	"github.com/slspeek/crudapi/storage/mongo"
+	"github.com/slspeek/flowgo"
 	"github.com/slspeek/go_httpauth"
 	"github.com/slspeek/goblob"
-	"github.com/slspeek/flowgo"
-	"html/template"
-	"io"
 	"labix.org/v2/mgo"
 	"log"
 	"net/http"
@@ -51,24 +48,14 @@ func storage() *mongo.MongoStorage {
 }
 
 func uploadHandler() *flow.UploadHandler {
-  bs, err := goblob.NewBlobService("localhost", "test", "flow")
-  if err != nil {
-    panic("No blobservice could be created")
-  }
-	return flow.NewUploadHandler(bs, func(w http.ResponseWriter, r *http.Request, blobId string) {
-    log.Println("Upload completed: ", blobId)
-  })
+	bs, err := goblob.NewBlobService("localhost", "test", "flow")
+	if err != nil {
+		panic("No blobservice could be created")
+	}
+	return flow.NewUploadHandler(bs, func(r *http.Request, blobId string) {
+		log.Println("Upload completed: ", blobId)
+	})
 }
-
-var rootTemplate = template.Must(template.New("root").Parse(rootTemplateHTML))
-
-const rootTemplateHTML = `
-<html><body>
-<form action="{{.}}" method="POST" enctype="multipart/form-data">
-Upload File: <input type="file" name="file"><br>
-<input type="submit" name="submit" value="Submit">
-</form></body></html>
-`
 
 func check(err error) {
 	if err != nil {
@@ -76,61 +63,15 @@ func check(err error) {
 	}
 }
 
-func handleRoot(w http.ResponseWriter, r *http.Request) {
-	uploadURL := "/upload"
-	w.Header().Set("Content-Type", "text/html")
-	err := rootTemplate.Execute(w, uploadURL)
-	if err != nil {
-		log.Printf("%v", err)
-	}
-}
-
 func handleServe(w http.ResponseWriter, r *http.Request) {
 	filename := r.FormValue("filename")
-	bs, err := goblob.NewBlobService("localhost", "test", "fs")
+	bs, err := goblob.NewBlobService("localhost", "test", "flow")
 	check(err)
 	gf, err := bs.OpenName(filename)
-	io.Copy(w, gf)
+	check(err)
+	http.ServeContent(w, r, filename, gf.UploadDate(), gf)
 	gf.Close()
 	bs.Close()
-}
-
-func handleUpload(w http.ResponseWriter, r *http.Request) {
-	log.Print("Upload ", r)
-	//reader, err := r.MultipartReader()
-	//if err != nil {
-	//fmt.Println(err)
-	//http.Error(w, "not a form", http.StatusBadRequest)
-	//}
-	f, _, err := r.FormFile("file")
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "not a form", http.StatusBadRequest)
-	}
-	err = r.ParseForm()
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "not a form", http.StatusBadRequest)
-	}
-
-	fmt.Println("Form: ", r.Form)
-	defer r.Body.Close()
-
-	bs, err := goblob.NewBlobService("localhost", "test", "fs")
-	if err != nil {
-		panic(err)
-	}
-	gf, err := bs.Create(r.URL.Query().Get("flowFilename"))
-	if err != nil {
-		panic(err)
-	}
-	_, err = io.Copy(gf, f)
-	if err != nil {
-		panic(err)
-	}
-	gf.Close()
-	bs.Close()
-	//http.Redirect(w, r, "/serve/?filename="+filename, http.StatusFound)
 }
 
 func main() {
@@ -140,7 +81,6 @@ func main() {
 	// router
 	r := mux.NewRouter()
 
-	r.HandleFunc("/form", handleRoot)
 	r.HandleFunc("/serve", handleServe)
 	r.Handle("/upload", uploadHandler())
 	// mounting the API
