@@ -66,9 +66,15 @@ func check(err error) {
 func handleServe(w http.ResponseWriter, r *http.Request) {
 	filename := r.FormValue("filename")
 	bs, err := goblob.NewBlobService("localhost", "test", "flow")
-	check(err)
+	if err != nil {
+    http.Error(w, err.Error(), http.StatusNotFound)
+    return
+  }
 	gf, err := bs.OpenName(filename)
-	check(err)
+	if err != nil {
+    http.Error(w, err.Error(), http.StatusNotFound)
+    return
+  }
 	http.ServeContent(w, r, filename, gf.UploadDate(), gf)
 	gf.Close()
 	bs.Close()
