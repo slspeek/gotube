@@ -1,6 +1,7 @@
 package main
 
 import (
+	auth "github.com/abbot/go-http-auth"
 	"github.com/gorilla/mux"
 	"github.com/slspeek/crudapi"
 	"github.com/slspeek/crudapi/storage/mongo"
@@ -67,27 +68,35 @@ func handleServe(w http.ResponseWriter, r *http.Request) {
 	filename := r.FormValue("filename")
 	bs, err := goblob.NewBlobService("localhost", "test", "flow")
 	if err != nil {
-    http.Error(w, err.Error(), http.StatusNotFound)
-    return
-  }
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
 	gf, err := bs.OpenName(filename)
 	if err != nil {
-    http.Error(w, err.Error(), http.StatusNotFound)
-    return
-  }
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
 	http.ServeContent(w, r, filename, gf.UploadDate(), gf)
 	gf.Close()
 	bs.Close()
 }
 
+func Secret(user, realm string) string {
+	if user == "john" {
+		// password is "hello"
+		return "$1$dlPL2MqE$oQmn16q49SqdmhenQuNgs1"
+	}
+	return ""
+}
 func main() {
 
+	authenticator := auth.NewBasicAuthenticator("gotube.org", Secret)
 	// storage
 	s := storage()
 	// router
 	r := mux.NewRouter()
 
-	r.HandleFunc("/serve", handleServe)
+	r.HandleFunc("/serve", auth.JustCheck(authenticator, handleServe))
 	r.Handle("/upload", uploadHandler())
 	// mounting the API
 	crudapi.MountAPI(r.PathPrefix("/api").Subrouter(), s, NewMyGuard())

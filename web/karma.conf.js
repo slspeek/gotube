@@ -1,5 +1,6 @@
 // Karma configuration
 // http://karma-runner.github.io/0.10/config/configuration-file.html
+'use strict';
 
 module.exports = function(config) {
   config.set({
@@ -15,6 +16,18 @@ module.exports = function(config) {
       'app/bower_components/angular-mocks/angular-mocks.js',
       'app/bower_components/angular-cookies/angular-cookies.js',
       'app/bower_components/angular-sanitize/angular-sanitize.js',
+
+      'app/bower_components/angular-resource/angular-resource.js',
+      'app/bower_components/angular-route/angular-route.js',
+      'app/bower_components/flow.js/src/flow.js',
+      'app/bower_components/angular-authentication/js/angular-authentication.js',
+      'app/bower_components/ng-flow/src/directives/btn.js',
+      'app/bower_components/ng-flow/src/directives/drop.js',
+      'app/bower_components/ng-flow/src/directives/img.js',
+      'app/bower_components/ng-flow/src/directives/init.js',
+      'app/bower_components/ng-flow/src/directives/transfers.js',
+      'app/bower_components/ng-flow/src/ng-flow.js',
+      'app/bower_components/ng-flow/src/provider.js',
       'app/scripts/*.js',
       'app/scripts/**/*.js',
       'test/mock/**/*.js',
