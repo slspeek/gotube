@@ -15,3 +15,5 @@ https://github.com/slspeek/flowgo
 https://github.com/slspeek/goblob
 
 https://github.com/slspeek/crudapi
+
+https://github.com/witoldsz/angular-http-auth
