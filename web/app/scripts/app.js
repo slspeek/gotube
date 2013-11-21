@@ -7,17 +7,23 @@
     'ngFlow',
     'ngSanitize',
     'ngResource',
-    'authentication'
+    'LocalStorageModule',
+    'DigestAuthInterceptor'
   ])
-    .config(function($routeProvider) {
+    .config(function($routeProvider, $httpProvider) {
       $routeProvider
         .when('/', {
           templateUrl: 'views/main.html',
           controller: 'MainCtrl'
         })
+        .when('/login', {
+          templateUrl: 'views/login.html',
+          controller: 'LoginFormCtrl'
+        })
         .otherwise({
           redirectTo: '/'
         });
+      $httpProvider.interceptors.push('digestAuthInterceptor');
     }).config(function(flowFactoryProvider) {
       flowFactoryProvider.defaults = {
         target: '/upload',

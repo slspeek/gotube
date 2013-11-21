@@ -30,4 +30,22 @@ angular.module('webApp')
     $scope.onError = function(response) {
       console.log(response.data);
     };
+
+  })
+  .controller('LoginFormCtrl', function($scope, $http, localStorageService) {
+    $scope.submit = function() {
+      localStorageService.add('email', $scope.username);
+      localStorageService.add('password', $scope.password);
+
+      console.log('Just stored');
+      $http.post('auth', {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then(function(response) {
+        console.log('success', response);
+      }, function(response) {
+        console.log('error', response);
+      });
+    };
   });

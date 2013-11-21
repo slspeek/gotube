@@ -81,22 +81,16 @@ func handleServe(w http.ResponseWriter, r *http.Request) {
 	bs.Close()
 }
 
-func Secret(user, realm string) string {
-	if user == "john" {
-		// password is "hello"
-		return "$1$dlPL2MqE$oQmn16q49SqdmhenQuNgs1"
-	}
-	return ""
-}
 func main() {
 
-	authenticator := auth.NewBasicAuthenticator("gotube.org", Secret)
 	// storage
 	s := storage()
 	// router
 	r := mux.NewRouter()
 
+  authenticator := authenticator()
 	r.HandleFunc("/serve", auth.JustCheck(authenticator, handleServe))
+	r.HandleFunc("/auth", authenticator.Wrap(authService))
 	r.Handle("/upload", uploadHandler())
 	// mounting the API
 	crudapi.MountAPI(r.PathPrefix("/api").Subrouter(), s, NewMyGuard())
