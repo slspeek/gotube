@@ -91,10 +91,12 @@ func main() {
   authenticator := authenticator()
 	r.HandleFunc("/serve", auth.JustCheck(authenticator, handleServe))
 	r.HandleFunc("/auth", authenticator.Wrap(authService))
-	r.Handle("/upload", uploadHandler())
+  uph := uploadHandler()
+
+	r.HandleFunc("/upload", auth.JustCheck(authenticator, uph.ServeHTTP))
 	// mounting the API
 	crudapi.MountAPI(r.PathPrefix("/api").Subrouter(), s, NewMyGuard())
 
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(os.Args[1])))
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServeTLS(":8080", "cert.pem", "key.pem", r))
 }

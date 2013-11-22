@@ -7,8 +7,7 @@
   <button class="btn" ng-click="submit()" >Login</button>
 
 
-<!DOCTYPE html>
-<div ng-flow-init>
+  <div ng-flow-init="options()">
 <div class="container">
 
   <video>
@@ -17,7 +16,8 @@
   <div class="row">
       <h2>Buttons:</h2>
 
-      <button class="btn" ng-flow-btn><i class="icon icon-file"></i>Upload File</button>
+      <button class="btn" ng-click="print()">Print flow</button>
+      <button class="btn" ng-flow-target='/UP' ng-flow-headers="header()" ng-flow-btn><i class="icon icon-file"></i>Upload File</button>
       <button class="btn" ng-flow-btn ng-directory><i class="icon icon-folder-open"></i>Upload
         Folder
       </button>

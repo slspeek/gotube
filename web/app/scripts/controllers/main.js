@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webApp')
-  .controller('MainCtrl', function($scope, $resource) {
+  .controller('MainCtrl', function($scope, $resource, ahttp) {
     var Video = $resource('/api/videos/:Id', {
       Id: '@id'
     });
@@ -16,34 +16,23 @@ angular.module('webApp')
         'desc': $scope.description
       });
     };
-    $scope.uploadConfig = {
-      url: '/upload',
-      data: {
-        extradata: 123
-        // Will contain the file or files when sent with the upload-button
-      }
+    $scope.options = function() {
+      return {
+        headers: ahttp.header(),
+        target: '/upload'
+      };
     };
-
-    $scope.onSuccess = function(response) {
-      console.log(response.data);
-    };
-    $scope.onError = function(response) {
-      console.log(response.data);
-    };
-
   })
-  .controller('LoginFormCtrl', function($scope, $http, localStorageService) {
+  .controller('LoginFormCtrl', function($scope, ahttp) {
     $scope.submit = function() {
-      localStorageService.add('email', $scope.username);
-      localStorageService.add('password', $scope.password);
-
-      console.log('Just stored');
-      $http.post('auth', {
+      ahttp.setPrincipal($scope.username, $scope.password);
+      ahttp.http.post('auth', {
         headers: {
           'Content-Type': 'application/json'
         }
       }).then(function(response) {
-        console.log('success', response);
+        ahttp.loginConfirmed();
+        console.log('success', response.data);
       }, function(response) {
         console.log('error', response);
       });
