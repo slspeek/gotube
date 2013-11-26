@@ -1,0 +1,33 @@
+package main
+
+import (
+  "github.com/emicklei/go-restful"
+  "io"
+  "labix.org/v2/mgo"
+  "net/http"
+  "net/http/httptest"
+  "os"
+  "strings"
+  "testing"
+)
+
+//func TestVideoResource(t *testing.T) {
+  //t.Log("Video test")
+  //sess, err := mgo.Dial("localhost")
+  //if err != nil {
+    //t.Fatal(err)
+  //}
+  //vr := NewVideoResource(sess, "test", "Video")
+  //container := restful.NewContainer()
+  //vr.Register(container)
+  //ts := httptest.NewServer(container)
+  //defer ts.Close()
+
+  //resp, err := http.Post(ts.URL + "videos", "application/json", strings.NewReader(`{"Name":"Novocento"}`) )
+	//io.Copy(os.Stderr, resp.Body)
+
+
+ //if resp.StatusCode != http.StatusCreated {
+   //t.Fatal("StatusCode: ", resp.StatusCode)
+  //}
+//}
