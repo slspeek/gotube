@@ -1,11 +1,10 @@
 package main
 
-import"labix.org/v2/mgo"
+import "labix.org/v2/mgo"
 import "labix.org/v2/mgo/bson"
-import "log"
 
 type IdFunc interface {
-  SetId(string)
+	SetId(string)
 }
 type MongoDao struct {
 	session *mgo.Session
@@ -18,16 +17,15 @@ func NewMongoDao(s *mgo.Session, db string, kind string) *MongoDao {
 }
 
 func (self *MongoDao) Create(entity interface{}) (id string, err error) {
-  oid := bson.NewObjectId()
-  log.Print("Create id: ", oid)
-  info, err := self.collection().UpsertId(oid, entity)
-  return info.UpsertedId.(bson.ObjectId).Hex(), err 
+	oid := bson.NewObjectId()
+	info, err := self.collection().UpsertId(oid, entity)
+	return info.UpsertedId.(bson.ObjectId).Hex(), err
 }
 
 func (self *MongoDao) Get(id string, result interface{}) (err error) {
-  oid := bson.ObjectIdHex(id)
+	oid := bson.ObjectIdHex(id)
 	err = self.collection().FindId(oid).One(result)
-  return
+	return
 }
 
 func (self *MongoDao) GetAll(result interface{}) (err error) {

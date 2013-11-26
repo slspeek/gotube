@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/emicklei/go-restful"
+	"github.com/slspeek/go-restful"
 	"labix.org/v2/mgo"
+	"labix.org/v2/mgo/bson"
 	"log"
 	"net/http"
 )
@@ -17,11 +18,12 @@ import (
 //GET_ALL_OWN AUTH
 
 type Video struct {
-	_Id, Owner, Name, Descr, BlobId string
+  Id   bson.ObjectId   "_id,omitempty"
+	Owner, Name, Descr, BlobId string
 }
 
 func (v Video) SetId(id string) {
-  v._Id = id
+  v.Id = bson.ObjectIdHex(id)
 }
 
 type VideoResource struct {
@@ -47,14 +49,14 @@ func (v VideoResource) Register(container *restful.Container) {
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
 		Writes(Video{})) // on the response
 
-	ws.Route(ws.PUT("").To(v.updateVideo).
-		// docs
-		Doc("update a video").
-		Reads(Video{})) // from the request
-
-	ws.Route(ws.POST("/{video-id}").To(v.createVideo).
+	ws.Route(ws.POST("").To(v.updateVideo).
 		// docs
 		Doc("create a video").
+		Reads(Video{})) // from the request
+
+	ws.Route(ws.PUT("/{video-id}").To(v.createVideo).
+		// docs
+		Doc("update a video").
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
 		Reads(Video{})) // from the request
 
@@ -70,9 +72,12 @@ func (v VideoResource) findVideo(request *restful.Request, response *restful.Res
 	log.Print("find")
 	id := request.PathParameter("video-id")
 	user := request.Attribute("username")
+  log.Print("User: ", user)
 	vid := new(Video)
-	v.videos.Get(id, &vid)
-	if len(vid._Id) == 0 {
+  err := v.videos.Get(id, &vid)
+	if err !=nil || len(vid.Id) == 0 {
+    log.Print("Error: ", err)
+    log.Printf("Video: %#v", vid)
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusNotFound, "Video could not be found.")
 	} else {
@@ -90,7 +95,7 @@ func (v *VideoResource) updateVideo(request *restful.Request, response *restful.
 	user := request.Attribute("username")
 	if err == nil {
 		if user == vid.Owner {
-			v.videos.Update(vid._Id, vid)
+			v.videos.Update(vid.Id.Hex(), vid)
 			response.WriteEntity(vid)
 		} else {
 			response.WriteErrorString(http.StatusForbidden, "Not the owner")
@@ -102,8 +107,9 @@ func (v *VideoResource) updateVideo(request *restful.Request, response *restful.
 }
 
 func (v *VideoResource) createVideo(request *restful.Request, response *restful.Response) {
-	vid := Video{_Id: request.PathParameter("video-id")}
+	vid := Video{Id: bson.ObjectIdHex(request.PathParameter("video-id"))}
 	user := request.Attribute("username")
+  log.Print("User: ", user)
 	err := request.ReadEntity(&vid)
 	if err == nil {
 		if user == vid.Owner {
@@ -112,7 +118,7 @@ func (v *VideoResource) createVideo(request *restful.Request, response *restful.
 				response.AddHeader("Content-Type", "text/plain")
 				response.WriteErrorString(http.StatusInternalServerError, err.Error())
 			}
-			vid._Id = id
+			vid.Id = bson.ObjectIdHex(id)
 			response.WriteHeader(http.StatusCreated)
 			response.WriteEntity(vid)
 		} else {
