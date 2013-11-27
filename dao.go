@@ -2,6 +2,7 @@ package main
 
 import "labix.org/v2/mgo"
 import "labix.org/v2/mgo/bson"
+import "log"
 
 type IdFunc interface {
 	SetId(string)
@@ -34,7 +35,9 @@ func (self *MongoDao) GetAll(result interface{}) (err error) {
 }
 
 func (self *MongoDao) Update(id string, value interface{}) (err error) {
-	err = self.collection().UpdateId(id, value)
+  log.Printf("id: %s , value: %v ", id, value)
+  oid := bson.ObjectIdHex(id)
+	err = self.collection().UpdateId(oid, value)
 	return
 }
 
