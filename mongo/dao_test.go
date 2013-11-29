@@ -1,4 +1,4 @@
-package main
+package mongo
 
 import (
 	"labix.org/v2/mgo"
@@ -6,15 +6,23 @@ import (
 	"testing"
 )
 
-func dao(t *testing.T) *MongoDao {
+type Video struct {
+	Id     bson.ObjectId "_id,omitempty"
+	Owner  string
+	Name   string
+	Desc   string
+	BlobId string
+}
+
+func dao(t *testing.T) *Dao {
 	sess, err := mgo.Dial("localhost")
 	if err != nil {
 		t.Fatal(err)
 	}
-	return NewMongoDao(sess, "test", "Video")
+	return NewDao(sess, "test", "Video")
 }
 
-func TestMongoDao(t *testing.T) {
+func TestDao(t *testing.T) {
 	dao := dao(t)
 	v1 := Video{"", "steven", "Novecento", "", ""}
 	id, err := dao.Create(v1)
@@ -32,7 +40,7 @@ func TestMongoDao(t *testing.T) {
 	dao.Delete(id)
 }
 
-func TestMongoDaoId(t *testing.T) {
+func TestDaoId(t *testing.T) {
 	dao := dao(t)
 	v1 := Video{"", "steven", "Novecento", "", ""}
 	id, err := dao.Create(v1)

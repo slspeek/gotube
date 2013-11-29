@@ -1,8 +1,10 @@
-package main
+package rest
 
 import (
 	"fmt"
 	"github.com/slspeek/go-restful"
+	"github.com/slspeek/gotube/auth"
+	"github.com/slspeek/gotube/mongo"
 	"io"
 	"labix.org/v2/mgo"
 	"net/http"
@@ -12,12 +14,20 @@ import (
 	"testing"
 )
 
+func dao(t *testing.T) *mongo.Dao {
+	sess, err := mgo.Dial("localhost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return mongo.NewDao(sess, "test", "Video")
+}
+
 func videoResource(t *testing.T) *VideoResource {
 	sess, err := mgo.Dial("localhost")
 	if err != nil {
 		t.Fatal(err)
 	}
-	return NewVideoResource(sess, "test", "Video", &Auth{func(*http.Request) string { return "steven" }})
+	return NewVideoResource(sess, "test", "Video", &auth.Auth{func(*http.Request) string { return "steven" }})
 }
 
 func videoTestServer(t *testing.T) *httptest.Server {
@@ -52,7 +62,7 @@ func TestGet(t *testing.T) {
 	resp, err := http.Get(url)
 	io.Copy(os.Stderr, resp.Body)
 
-	if resp.StatusCode != http.StatusMethodNotAllowed {
+	if resp.StatusCode != http.StatusForbidden {
 		t.Fatal("StatusCode: ", resp.StatusCode)
 	}
 }

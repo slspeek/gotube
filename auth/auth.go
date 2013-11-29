@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"encoding/json"
@@ -24,12 +24,12 @@ func (self *Auth) Filter(req *restful.Request, resp *restful.Response, chain *re
 	}
 }
 
-func authenticator(passwdFile string) *auth.BasicAuth {
+func Authenticator(passwdFile string) *auth.BasicAuth {
 	provider := auth.HtpasswdFileProvider(passwdFile)
 	return auth.NewBasicAuthenticator("gotube.org", provider)
 }
 
-func authService(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
+func AuthService(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
 	userinfo := make(bson.M)
 	userinfo["username"] = r.Username
 	b, err := json.Marshal(userinfo)

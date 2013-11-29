@@ -1,7 +1,9 @@
-package main
+package rest
 
 import (
 	"github.com/slspeek/go-restful"
+	"github.com/slspeek/gotube/auth"
+	"github.com/slspeek/gotube/mongo"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -14,27 +16,61 @@ type Video struct {
 }
 
 type VideoResource struct {
-	videos *MongoDao
-	auth   *Auth
+	videos *mongo.Dao
+	auth   *auth.Auth
 }
 
-func NewVideoResource(sess *mgo.Session, db string, collecion string, auth *Auth) *VideoResource {
-	dao := NewMongoDao(sess, db, collecion)
+func NewVideoResource(sess *mgo.Session, db string, collecion string, auth *auth.Auth) *VideoResource {
+	dao := mongo.NewDao(sess, db, collecion)
 	return &VideoResource{dao, auth}
 }
 
+func NewObjectIdFilter(param string) restful.FilterFunction {
+	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+		id := req.PathParameter(param)
+		if !bson.IsObjectIdHex(id) {
+			resp.WriteErrorString(http.StatusBadRequest, "No valid object id passed")
+			return
+		}
+		chain.ProcessFilter(req, resp)
+	}
+}
+
+func (v VideoResource) IsOwnerFilter(param string) restful.FilterFunction {
+	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+		id := req.PathParameter(param)
+		user := req.Attribute("username")
+		vid := new(Video)
+		err := v.videos.Get(id, &vid)
+		if err != nil {
+			resp.AddHeader("Content-Type", "text/plain")
+			resp.WriteErrorString(http.StatusNotFound, "Video could not be found.")
+			return
+		}
+		if user != vid.Owner {
+			resp.AddHeader("Content-Type", "text/plain")
+			resp.WriteErrorString(http.StatusForbidden, "Not the owner")
+			return
+		}
+		chain.ProcessFilter(req, resp)
+	}
+}
+
 func (v VideoResource) Register(container *restful.Container) {
+	videoIdFilter := NewObjectIdFilter("video-id")
+	ownerFilter := v.IsOwnerFilter("video-id")
 	ws := new(restful.WebService)
 	ws.
 		Path("/api/videos").
 		Consumes(restful.MIME_XML, restful.MIME_JSON).
-		Produces(restful.MIME_JSON, restful.MIME_XML) // you can specify this per route as well
+		Produces(restful.MIME_JSON, restful.MIME_XML)
+
 	ws.Route(ws.GET("").To(v.findAllVideos).
 		// docs
 		Doc("get all your videos").
 		Writes(Video{})) // on the response
 
-	ws.Route(ws.GET("/{video-id}").To(v.findVideo).
+	ws.Route(ws.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.findVideo).
 		// docs
 		Doc("get a video").
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
@@ -45,13 +81,13 @@ func (v VideoResource) Register(container *restful.Container) {
 		Doc("create a video").
 		Reads(Video{})) // from the request
 
-	ws.Route(ws.PUT("/{video-id}").To(v.updateVideo).
+	ws.Route(ws.PUT("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.updateVideo).
 		// docs
 		Doc("update a video").
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
 		Reads(Video{})) // from the request
 
-	ws.Route(ws.DELETE("/{video-id}").To(v.removeVideo).
+	ws.Route(ws.DELETE("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.removeVideo).
 		// docs
 		Doc("delete a video").
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
@@ -69,7 +105,7 @@ func (v VideoResource) findVideo(request *restful.Request, response *restful.Res
 	user := request.Attribute("username")
 	vid := new(Video)
 	err := v.videos.Get(id, &vid)
-	if err != nil { //|| len(vid.Id) == 0 {
+	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusNotFound, "Video could not be found.")
 	} else {
