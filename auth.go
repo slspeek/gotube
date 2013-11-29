@@ -3,14 +3,29 @@ package main
 import (
 	"encoding/json"
 	auth "github.com/abbot/go-http-auth"
+	"github.com/slspeek/go-restful"
 	"labix.org/v2/mgo/bson"
-	"log"
 	"net/http"
 )
 
-func authenticator() *auth.BasicAuth {
-	provider := auth.HtpasswdFileProvider("htpasswd")
-  log.Println("password file: ", provider)
+type CheckAuthFunc func(*http.Request) string
+
+type Auth struct {
+	Check CheckAuthFunc
+}
+
+func (self *Auth) Filter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+	username := self.Check(req.Request)
+	if username != "" {
+		req.SetAttribute("username", username)
+		chain.ProcessFilter(req, resp)
+	} else {
+		resp.WriteErrorString(http.StatusUnauthorized, "No username provided")
+	}
+}
+
+func authenticator(passwdFile string) *auth.BasicAuth {
+	provider := auth.HtpasswdFileProvider(passwdFile)
 	return auth.NewBasicAuthenticator("gotube.org", provider)
 }
 

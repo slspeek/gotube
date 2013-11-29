@@ -4,8 +4,8 @@ import (
 	auth "github.com/abbot/go-http-auth"
 	"github.com/gorilla/mux"
 	"github.com/slspeek/crudapi"
-	"github.com/slspeek/crudapi/storage/mongo"
 	"github.com/slspeek/flowgo"
+	"github.com/slspeek/go-restful"
 	"github.com/slspeek/go_httpauth"
 	"github.com/slspeek/goblob"
 	"labix.org/v2/mgo"
@@ -38,14 +38,6 @@ func (g MyGuard) Authorize(client string, action crudapi.Action, urlVars map[str
 
 func hello(resp http.ResponseWriter, req *http.Request) {
 	resp.Write([]byte("Hello there!"))
-}
-
-func storage() *mongo.MongoStorage {
-	s, err := mgo.Dial("localhost")
-	if err != nil {
-		panic(err)
-	}
-	return mongo.NewMongoStorage(s, "test")
 }
 
 func uploadHandler() *flow.UploadHandler {
@@ -83,20 +75,29 @@ func handleServe(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-	// storage
-	s := storage()
 	// router
+
 	r := mux.NewRouter()
 
-  authenticator := authenticator()
+	sess, err := mgo.Dial("localhost")
+	if err != nil {
+		panic(err)
+	}
+	authenticator := authenticator("htpasswd")
+	videoService := NewVideoResource(sess, "test", "Video", &Auth{authenticator.CheckAuth})
+	container := restful.NewContainer()
+	videoService.Register(container)
+
 	r.HandleFunc("/serve", auth.JustCheck(authenticator, handleServe))
 	r.HandleFunc("/auth", authenticator.Wrap(authService))
-  uph := uploadHandler()
+	uph := uploadHandler()
 
 	r.HandleFunc("/upload", auth.JustCheck(authenticator, uph.ServeHTTP))
-	// mounting the API
-	crudapi.MountAPI(r.PathPrefix("/api").Subrouter(), s, NewMyGuard())
 
+	r.PathPrefix("/api/videos").Handler(container)
+	r.PathPrefix("/API").HandlerFunc(container.ServeHTTP)
+	r.HandleFunc("/apis", container.ServeHTTP)
+	log.Println("apis registered")
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(os.Args[1])))
 	log.Fatal(http.ListenAndServeTLS(":8080", "cert.pem", "key.pem", r))
 }
