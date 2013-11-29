@@ -2,11 +2,7 @@ package main
 
 import "labix.org/v2/mgo"
 import "labix.org/v2/mgo/bson"
-import "log"
 
-type IdFunc interface {
-	SetId(string)
-}
 type MongoDao struct {
 	session *mgo.Session
 	db      string
@@ -30,19 +26,24 @@ func (self *MongoDao) Get(id string, result interface{}) (err error) {
 }
 
 func (self *MongoDao) GetAll(result interface{}) (err error) {
-	err = self.collection().Find(nil).All(&result)
+	err = self.collection().Find(nil).All(result)
+	return
+}
+
+func (self *MongoDao) Find(constraint bson.M, result interface{}) (err error) {
+	err = self.collection().Find(constraint).All(result)
 	return
 }
 
 func (self *MongoDao) Update(id string, value interface{}) (err error) {
-  log.Printf("id: %s , value: %v ", id, value)
-  oid := bson.ObjectIdHex(id)
+	oid := bson.ObjectIdHex(id)
 	err = self.collection().UpdateId(oid, value)
 	return
 }
 
 func (self *MongoDao) Delete(id string) (err error) {
-	err = self.collection().RemoveId(id)
+	oid := bson.ObjectIdHex(id)
+	err = self.collection().RemoveId(oid)
 	return
 }
 
