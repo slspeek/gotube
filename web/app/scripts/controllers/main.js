@@ -11,12 +11,15 @@ angular.module('webApp')
       'Karma'
     ];
     $scope.save = function() {
+      console.log('username: ' + ahttp.username);
       $scope.videoId = Video.save({
-        'title': $scope.title,
-        'desc': $scope.description
+        'Owner': ahttp.username,
+        'Name': $scope.title,
+        'Desc': $scope.description
       });
     };
     $scope.options = function() {
+      console.log('Options called');
       return {
         headers: ahttp.header(),
         target: '/upload'

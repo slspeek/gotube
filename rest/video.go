@@ -11,8 +11,8 @@ import (
 )
 
 type Video struct {
-	Id                         bson.ObjectId "_id,omitempty"
-	Owner, Name, Descr, BlobId string
+	Id                        bson.ObjectId "_id,omitempty"
+	Owner, Name, Desc, BlobId string
 }
 
 type VideoResource struct {
@@ -25,7 +25,7 @@ func NewVideoResource(sess *mgo.Session, db string, collecion string, auth *auth
 	return &VideoResource{dao, auth}
 }
 
-func NewObjectIdFilter(param string) restful.FilterFunction {
+func ObjectIdFilter(param string) restful.FilterFunction {
 	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 		id := req.PathParameter(param)
 		if !bson.IsObjectIdHex(id) {
@@ -57,7 +57,7 @@ func (v VideoResource) IsOwnerFilter(param string) restful.FilterFunction {
 }
 
 func (v VideoResource) Register(container *restful.Container) {
-	videoIdFilter := NewObjectIdFilter("video-id")
+	videoIdFilter := ObjectIdFilter("video-id")
 	ownerFilter := v.IsOwnerFilter("video-id")
 	ws := new(restful.WebService)
 	ws.
@@ -112,7 +112,7 @@ func (v VideoResource) findVideo(request *restful.Request, response *restful.Res
 		if user == vid.Owner {
 			response.WriteEntity(vid)
 		} else {
-			response.WriteErrorString(http.StatusMethodNotAllowed, "Not the owner")
+			response.WriteErrorString(http.StatusForbidden, "Not the owner")
 		}
 	}
 }
@@ -147,7 +147,7 @@ func (v *VideoResource) createVideo(request *restful.Request, response *restful.
 			response.WriteHeader(http.StatusCreated)
 			response.WriteEntity(vid)
 		} else {
-			response.WriteErrorString(http.StatusMethodNotAllowed, "Not the owner")
+			response.WriteErrorString(http.StatusForbidden, "Not the owner")
 			return
 		}
 	} else {
@@ -176,7 +176,7 @@ func (v *VideoResource) updateVideo(request *restful.Request, response *restful.
 			}
 			response.WriteEntity(vid)
 		} else {
-			response.WriteErrorString(http.StatusMethodNotAllowed, "Not the owner")
+			response.WriteErrorString(http.StatusForbidden, "Not the owner")
 		}
 	} else {
 		response.AddHeader("Content-Type", "text/plain")
@@ -205,6 +205,6 @@ func (v *VideoResource) removeVideo(request *restful.Request, response *restful.
 			response.WriteErrorString(http.StatusInternalServerError, err.Error())
 		}
 	} else {
-		response.WriteErrorString(http.StatusMethodNotAllowed, "Not the owner")
+		response.WriteErrorString(http.StatusForbidden, "Not the owner")
 	}
 }

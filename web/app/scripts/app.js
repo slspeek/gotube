@@ -58,6 +58,7 @@
         },
         http: $http,
         setPrincipal: function(username, password) {
+          this.username = username;
           this.code = 'Xasic ' + $base64.encode(username + ':' + password);
           $http.defaults.headers.common.authorization = this.code;
         },
