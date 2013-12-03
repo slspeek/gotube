@@ -52,6 +52,7 @@ func (v VideoResource) IsOwnerFilter(param string) restful.FilterFunction {
 			resp.WriteErrorString(http.StatusForbidden, "Not the owner")
 			return
 		}
+		req.SetAttribute("video-object", vid)
 		chain.ProcessFilter(req, resp)
 	}
 }
@@ -97,24 +98,8 @@ func (v VideoResource) Register(container *restful.Container) {
 }
 
 func (v VideoResource) findVideo(request *restful.Request, response *restful.Response) {
-	id := request.PathParameter("video-id")
-	if !bson.IsObjectIdHex(id) {
-		response.WriteErrorString(http.StatusBadRequest, "No valid object id passed")
-		return
-	}
-	user := request.Attribute("username")
-	vid := new(Video)
-	err := v.videos.Get(id, &vid)
-	if err != nil {
-		response.AddHeader("Content-Type", "text/plain")
-		response.WriteErrorString(http.StatusNotFound, "Video could not be found.")
-	} else {
-		if user == vid.Owner {
-			response.WriteEntity(vid)
-		} else {
-			response.WriteErrorString(http.StatusForbidden, "Not the owner")
-		}
-	}
+	vid := request.Attribute("video-object")
+	response.WriteEntity(vid)
 }
 
 func (v VideoResource) findAllVideos(request *restful.Request, response *restful.Response) {
@@ -153,16 +138,12 @@ func (v *VideoResource) createVideo(request *restful.Request, response *restful.
 	} else {
 		log.Print("Could not read back", err)
 		response.AddHeader("Content-Type", "text/plain")
-		response.WriteErrorString(http.StatusInternalServerError, err.Error())
+		response.WriteErrorString(http.StatusBadRequest, err.Error())
 	}
 }
 
 func (v *VideoResource) updateVideo(request *restful.Request, response *restful.Response) {
 	id := request.PathParameter("video-id")
-	if !bson.IsObjectIdHex(id) {
-		response.WriteErrorString(http.StatusBadRequest, "No valid object id passed")
-		return
-	}
 	vid := &Video{Id: bson.ObjectIdHex(id)}
 	user := request.Attribute("username")
 	err := request.ReadEntity(&vid)
@@ -180,31 +161,15 @@ func (v *VideoResource) updateVideo(request *restful.Request, response *restful.
 		}
 	} else {
 		response.AddHeader("Content-Type", "text/plain")
-		response.WriteErrorString(http.StatusInternalServerError, err.Error())
+		response.WriteErrorString(http.StatusBadRequest, err.Error())
 	}
 }
 
 func (v *VideoResource) removeVideo(request *restful.Request, response *restful.Response) {
 	id := request.PathParameter("video-id")
-	if !bson.IsObjectIdHex(id) {
-		response.WriteErrorString(http.StatusBadRequest, "No valid object id passed")
-		return
-	}
-	user := request.Attribute("username")
-	vid := new(Video)
-	err := v.videos.Get(id, &vid)
+	err := v.videos.Delete(id)
 	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
-	}
-	if user == vid.Owner {
-		err := v.videos.Delete(id)
-		if err != nil {
-			response.AddHeader("Content-Type", "text/plain")
-			response.WriteErrorString(http.StatusInternalServerError, err.Error())
-		}
-	} else {
-		response.WriteErrorString(http.StatusForbidden, "Not the owner")
 	}
 }

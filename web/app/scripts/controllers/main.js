@@ -1,43 +1,36 @@
-'use strict';
+(function() {
+  'use strict';
 
-angular.module('webApp')
-  .controller('MainCtrl', function($scope, $resource, ahttp) {
-    var Video = $resource('/api/videos/:Id', {
-      Id: '@id'
-    });
-    $scope.awesomeThings = [
-      'HTML5 Boilerplate',
-      'AngularJS',
-      'Karma'
-    ];
-    $scope.save = function() {
-      console.log('username: ' + ahttp.username);
-      $scope.videoId = Video.save({
-        'Owner': ahttp.username,
-        'Name': $scope.title,
-        'Desc': $scope.description
-      });
-    };
-    $scope.options = function() {
-      console.log('Options called');
-      return {
-        headers: ahttp.header(),
-        target: '/upload'
+  angular.module('webApp')
+    .controller('MainCtrl', function($scope, $routeParams, $resource, $location, ahttp, VideoResource) {
+      $scope.VideoId = $routeParams.VideoId;
+      $scope.awesomeThings = [
+        'HTML5 Boilerplate',
+        'AngularJS',
+        'Karma'
+      ];
+      $scope.save = function() {
+        console.log('username: ' + ahttp.username);
+        $scope.videoId = VideoResource.save({
+          'Owner': ahttp.username,
+          'Name': $scope.title,
+          'Desc': $scope.description
+        }, function(data) {
+          console.log(data.Id);
+          $location.path('/upload/' + data.Id);
+        });
+
       };
-    };
-  })
-  .controller('LoginFormCtrl', function($scope, ahttp) {
-    $scope.submit = function() {
-      ahttp.setPrincipal($scope.username, $scope.password);
-      ahttp.http.post('auth', {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }).then(function(response) {
-        ahttp.loginConfirmed();
-        console.log('success', response.data);
-      }, function(response) {
-        console.log('error', response);
-      });
-    };
-  });
+      $scope.options = function() {
+        console.log('Options called');
+        return {
+          headers: ahttp.header(),
+          target: '/upload/' + $scope.VideoId
+        };
+      };
+      $scope.pause = function() {
+        console.log('Pause called' + $scope.$flow);
+      };
+    });
+
+})();

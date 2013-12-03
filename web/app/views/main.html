@@ -1,35 +1,22 @@
-<div class="hero-unit">
+<div ng-flow-init="options()" class="hero-unit">
   <h1>Gotube</h1>
   <p>Upload video</p>
   <label accesskey="t" for="title">Title<label><input id="title" ng-model="title" type="TEXT" />
   <label accesskey="d" for="description">Description<label><TEXTAREA id="description" ng-model="description" type="TEXT" />
   <button class="btn" ng-click="save()" >Save</button>
-  <button class="btn" ng-click="submit()" >Login</button>
 
 
-  <div ng-flow-init="options()">
-<div class="container">
-
-  <video>
-  <source src="/serve?filename=962_Debian-LAN.ogv" type='video/ogg' />
-</video>
+  <div >
+  <div class="container">
   <div class="row">
-      <h2>Buttons:</h2>
-
-      <button class="btn" ng-click="print()">Print flow</button>
-      <button class="btn" ng-flow-target='/UP' ng-flow-headers="header()" ng-flow-btn><i class="icon icon-file"></i>Upload File</button>
-      <button class="btn" ng-flow-btn ng-directory><i class="icon icon-folder-open"></i>Upload
-        Folder
-      </button>
+      <button class="btn" ng-flow-btn><i class="icon icon-file"></i>Choose file</button>
     </div>
   </div>
   <hr class="soften">
 
-  <h2>Transfers:</h2>
-
   <p>
-    <a class="btn btn-small btn-success" ng-click="$flow.upload()">Upload</a>
-    <a class="btn btn-small btn-danger" ng-click="$flow.pause()">Pause</a>
+  <a class="btn btn-small btn-success" ng-click="$flow.upload()">Upload</a>
+    <a class="btn btn-small btn-danger" ng-click="pause()">Pause</a>
     <a class="btn btn-small btn-info" ng-click="$flow.cancel()">Cancel</a>
     <span class="label label-info">Size: {{$flow.getSize()}}</span>
     <span class="label label-info">Is Uploading: {{$flow.isUploading()}}</span>
@@ -83,12 +70,8 @@
   </table>
 
   <hr class="soften"/>
-
-  <div class="alert" ng-flow-drop ng-drag-over-class="alert-success">
-    Drag And Drop your file here
-  </div>
 </div>
 
-  <div>Video id: {{videoId.id}}</div> 
+  <div>Video id: {{videoId.Id}}</div> 
   <div class="success">{{message}}</div> 
 </div>

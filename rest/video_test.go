@@ -383,30 +383,6 @@ func TestRemoveUnit(t *testing.T) {
 	}
 }
 
-func TestRemoveUnitNotOwner(t *testing.T) {
-	dao := dao(t)
-	dao.DeleteAll()
-	id := createNovecento(t)
-	vr := videoResource(t, allwaysSteven)
-	req, _ := http.NewRequest("DELETE", "", nil)
-	rreq := restful.NewRequest(req, &[]byte{}, map[string]string{"video-id": id}, map[string]interface{}{"username": "rob"})
-
-	rw := httptest.NewRecorder()
-	rresp := restful.NewResponse(rw, "application/json", []string{"application/json"})
-
-	vr.removeVideo(rreq, rresp)
-	if rw.Code != http.StatusForbidden {
-		t.Fatal("StatusCode: ", rw.Code)
-	}
-	readBack := make([]Video, 1)
-	err := dao.GetAll(&readBack)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(readBack) != 1 {
-		t.Fatal("Expected one element")
-	}
-}
 func TestGetAllUnit(t *testing.T) {
 	//t.Skip()
 	dao := dao(t)

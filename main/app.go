@@ -6,6 +6,7 @@ import (
 	"github.com/slspeek/go-restful"
 	"github.com/slspeek/goblob"
 	"github.com/slspeek/gotube/auth"
+	"github.com/slspeek/gotube/mongo"
 	"github.com/slspeek/gotube/rest"
 	"labix.org/v2/mgo"
 	"log"
@@ -21,6 +22,19 @@ func uploadHandler() *flow.UploadHandler {
 	bs := goblob.NewBlobService(sess, "test", "flow")
 	return flow.NewUploadHandler(bs, func(r *http.Request, blobId string) {
 		log.Println("Upload completed: ", blobId)
+		id := r.URL.Path[8:]
+		vid := new(rest.Video)
+		dao := mongo.NewDao(sess, "test", "Video")
+		err := dao.Get(id, vid)
+		if err != nil {
+			log.Println("Could not get video : ", id)
+		}
+		vid.BlobId = blobId
+		err = dao.Update(id, vid)
+		if err != nil {
+			log.Println("Could not update video : ", id)
+		}
+
 	})
 }
 
@@ -54,6 +68,7 @@ func main() {
 	// router
 
 	r := mux.NewRouter()
+
 	authenticator := auth.Authenticator("htpasswd")
 	videoService := rest.NewVideoResource(sess.Copy(), "test", "Video", &auth.Auth{authenticator.CheckAuth})
 	container := restful.NewContainer()
@@ -63,7 +78,7 @@ func main() {
 	r.HandleFunc("/auth", authenticator.Wrap(auth.AuthService))
 
 	uph := uploadHandler()
-	r.Handle("/upload", uph)
+	r.Handle("/upload/{video}", uph)
 
 	r.PathPrefix("/api/videos").Handler(container)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(os.Args[1])))
