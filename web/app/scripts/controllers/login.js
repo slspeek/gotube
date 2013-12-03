@@ -2,7 +2,7 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('LoginFormCtrl', function($scope, ahttp) {
+    .controller('LoginFormCtrl', function($scope, $location, ahttp) {
       $scope.username = 'steven';
       $scope.password = 'gnu';
       $scope.submit = function() {
@@ -13,6 +13,7 @@
           }
         }).then(function(response) {
           ahttp.loginConfirmed();
+          $location.path('/list');
           console.log('success', response.data);
         }, function(response) {
           console.log('error', response);

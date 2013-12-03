@@ -1,5 +1,13 @@
-<div class="hero-unit">
-  <h1>Gotube</h1>
-  <p>Please login</p>
-
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{{username}}s videos</h3>
+  </div>
+  <div class="panel-body">
+      <ul class="videos">
+        <li ng-repeat="video in videoList">
+          <a href="/#/view/{{video.Id}}">{{video.Name}}</a>
+        </li>
+      </ul>
+      <a class="btn" href="/#/upload">Upload</a>
+  </div>
 </div>

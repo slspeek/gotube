@@ -12,17 +12,13 @@
   ])
     .config(function($routeProvider) {
       $routeProvider
-        .when('/upload/:VideoId', {
-          templateUrl: 'views/main.html',
-          controller: 'MainCtrl'
+        .when('/upload', {
+          templateUrl: 'views/edit.html',
+          controller: 'EditCtrl'
         })
         .when('/view/:VideoId', {
           templateUrl: 'views/view.html',
           controller: 'ViewCtrl'
-        })
-        .when('/view', {
-          templateUrl: 'views/list.html',
-          controller: 'ListCtrl'
         })
         .when('/list', {
           templateUrl: 'views/list.html',
@@ -33,7 +29,7 @@
           controller: 'LoginFormCtrl'
         })
         .otherwise({
-          redirectTo: '/list'
+          redirectTo: '/login'
         });
     }).config(function(flowFactoryProvider) {
       flowFactoryProvider.defaults = {

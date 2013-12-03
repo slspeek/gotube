@@ -2,7 +2,10 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('ListCtrl', function($scope, VideoResource) {
+    .controller('ListCtrl', function($scope, VideoResource, ahttp) {
+      $scope.videoList = VideoResource.getAll();
+      $scope.username = ahttp.username;
+
     });
 
 })();
