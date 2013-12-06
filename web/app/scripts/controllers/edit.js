@@ -13,6 +13,8 @@
           $location.path('/upload/' + data.Id);
         });
       };
+      $scope.title = 'Novecento';
+      $scope.description = 'Italian classic';
     });
 
 })();

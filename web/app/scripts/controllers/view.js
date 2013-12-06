@@ -2,7 +2,7 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('ViewCtrl', function($scope, $routeParams, VideoResource) {
+    .controller('ViewCtrl', function($scope, $routeParams, $sce, VideoResource, ahttp) {
       $scope.id = $routeParams.VideoId;
       var video = VideoResource.get({
         Id: $scope.id
@@ -10,6 +10,10 @@
         $scope.name = video.Name;
         $scope.desc = video.Desc;
       });
+
+      $scope.videoURL = $sce.trustAsResourceUrl('/serve/' + $routeParams.BlobId + '.ogv');
+
+
     });
 
 })();

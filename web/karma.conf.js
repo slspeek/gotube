@@ -28,6 +28,7 @@ module.exports = function(config) {
       'app/bower_components/ng-flow/src/directives/transfers.js',
       'app/bower_components/ng-flow/src/ng-flow.js',
       'app/bower_components/ng-flow/src/provider.js',
+      'app/bower_components/videogular/videogular.js',
       'app/scripts/*.js',
       'app/scripts/**/*.js',
       'test/mock/**/*.js',

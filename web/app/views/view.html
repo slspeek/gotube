@@ -2,7 +2,9 @@
   <h1>{{name}}</h1>
   <p>{{desc}}</p>
   <hr/>
-  <video>
-    <source ng-src="/serve/{{id}}">
+  <videogular>
+  <video preload='none' controls>
+  <source type="video/ogg" ng-src="{{videoURL}}">
   </video>
+</videogular>
 </div>

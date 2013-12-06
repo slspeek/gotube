@@ -5,7 +5,7 @@
   <div class="panel-body">
       <ul class="videos">
         <li ng-repeat="video in videoList">
-          <a href="/#/view/{{video.Id}}">{{video.Name}}</a>
+        <a href="/#/view/{{video.Id}}/{{video.BlobId}}">{{video.Name}}</a>
         </li>
       </ul>
       <a class="btn" href="/#/upload">Upload</a>

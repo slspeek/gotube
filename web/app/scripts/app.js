@@ -9,6 +9,7 @@
     'ngResource',
     'http-auth-interceptor',
     'ngBase64',
+    'com.2fdevs.videogular',
   ])
     .config(function($routeProvider) {
       $routeProvider
@@ -16,7 +17,11 @@
           templateUrl: 'views/edit.html',
           controller: 'EditCtrl'
         })
-        .when('/view/:VideoId', {
+        .when('/upload/:VideoId', {
+          templateUrl: 'views/upload.html',
+          controller: 'UploadCtrl'
+        })
+        .when('/view/:VideoId/:BlobId', {
           templateUrl: 'views/view.html',
           controller: 'ViewCtrl'
         })
@@ -29,7 +34,7 @@
           controller: 'LoginFormCtrl'
         })
         .otherwise({
-          redirectTo: '/login'
+          redirectTo: '/list'
         });
     }).config(function(flowFactoryProvider) {
       flowFactoryProvider.defaults = {

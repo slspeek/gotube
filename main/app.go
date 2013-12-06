@@ -45,15 +45,16 @@ func check(err error) {
 }
 
 func handleServe(w http.ResponseWriter, r *http.Request) {
-	filename := r.FormValue("filename")
+	id := mux.Vars(r)["video"]
+	id = id[:len(id)-4]
 	sess := sess.Copy()
 	bs := goblob.NewBlobService(sess, "test", "flow")
-	gf, err := bs.OpenName(filename)
+	gf, err := bs.Open(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	http.ServeContent(w, r, filename, gf.UploadDate(), gf)
+	http.ServeContent(w, r, "", gf.UploadDate(), gf)
 	gf.Close()
 	bs.Close()
 	sess.Close()
@@ -74,7 +75,7 @@ func main() {
 	container := restful.NewContainer()
 	videoService.Register(container)
 
-	r.HandleFunc("/serve", handleServe)
+	r.HandleFunc("/serve/{video}", handleServe)
 	r.HandleFunc("/auth", authenticator.Wrap(auth.AuthService))
 
 	uph := uploadHandler()

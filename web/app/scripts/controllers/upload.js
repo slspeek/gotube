@@ -2,13 +2,8 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('MainCtrl', function($scope, $routeParams, $resource, $location, ahttp, VideoResource) {
+    .controller('UploadCtrl', function($scope, $routeParams, $resource, $location, ahttp, VideoResource) {
       $scope.VideoId = $routeParams.VideoId;
-      $scope.awesomeThings = [
-        'HTML5 Boilerplate',
-        'AngularJS',
-        'Karma'
-      ];
       $scope.save = function() {
         console.log('username: ' + ahttp.username);
         $scope.videoId = VideoResource.save({
