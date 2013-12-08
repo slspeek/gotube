@@ -16,7 +16,12 @@
     "ng-flow": "~1",
     "angular-http-auth": "*",
     "ngBase64": "~2.0.0",
-    "videogular": "*"
+    "videogular": "*",
+    "videogular-controls": "*",
+    "videogular-buffering": "*",
+    "videogular-overlay-play": "*",
+    "videogular-poster": "*",
+    "videogular-themes-default": "*"
   },
   "devDependencies": {
     "angular-mocks": "~1.2.1",

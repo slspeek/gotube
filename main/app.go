@@ -1,6 +1,7 @@
 package main
 
 import (
+	ba "github.com/abbot/go-http-auth"
 	"github.com/gorilla/mux"
 	"github.com/slspeek/flowgo"
 	"github.com/slspeek/go-restful"
@@ -45,8 +46,7 @@ func check(err error) {
 }
 
 func handleServe(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["video"]
-	id = id[:len(id)-4]
+	id := r.URL.Path[7:]
 	sess := sess.Copy()
 	bs := goblob.NewBlobService(sess, "test", "flow")
 	gf, err := bs.Open(id)
@@ -66,7 +66,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// router
 
 	r := mux.NewRouter()
 
@@ -75,7 +74,7 @@ func main() {
 	container := restful.NewContainer()
 	videoService.Register(container)
 
-	r.HandleFunc("/serve/{video}", handleServe)
+	r.HandleFunc("/serve/{video}", ba.JustCheck(authenticator, handleServe))
 	r.HandleFunc("/auth", authenticator.Wrap(auth.AuthService))
 
 	uph := uploadHandler()

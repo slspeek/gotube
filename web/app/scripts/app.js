@@ -10,7 +10,13 @@
     'http-auth-interceptor',
     'ngBase64',
     'com.2fdevs.videogular',
-  ])
+    'com.2fdevs.videogular.plugins.controls',
+    'com.2fdevs.videogular.plugins.overlayplay',
+    'com.2fdevs.videogular.plugins.buffering',
+    'com.2fdevs.videogular.plugins.poster'
+  ]).run(function(ahttp) {
+
+  })
     .config(function($routeProvider) {
       $routeProvider
         .when('/upload', {
