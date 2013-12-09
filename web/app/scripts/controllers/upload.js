@@ -6,12 +6,13 @@
       $scope.VideoId = $routeParams.VideoId;
       $scope.save = function() {
         console.log('username: ' + ahttp.username);
-        $scope.videoId = VideoResource.save({
+        VideoResource.save({
           'Owner': ahttp.username,
           'Name': $scope.title,
           'Desc': $scope.description
         }, function(data) {
           console.log(data.Id);
+          $scope.returnedId = data.Id;
           $location.path('/upload/' + data.Id);
         });
 
@@ -22,9 +23,6 @@
           headers: ahttp.header(),
           target: '/upload/' + $scope.VideoId
         };
-      };
-      $scope.pause = function() {
-        console.log('Pause called' + $scope.$flow);
       };
     });
 
