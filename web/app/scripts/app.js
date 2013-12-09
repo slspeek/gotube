@@ -8,14 +8,14 @@
     'ngSanitize',
     'ngResource',
     'http-auth-interceptor',
-    'ngBase64',
+    'base64',
     'com.2fdevs.videogular',
     'com.2fdevs.videogular.plugins.controls',
     'com.2fdevs.videogular.plugins.overlayplay',
     'com.2fdevs.videogular.plugins.buffering',
     'com.2fdevs.videogular.plugins.poster'
   ]).run(function(ahttp) {
-
+    delete ahttp.username;
   })
     .config(function($routeProvider) {
       $routeProvider

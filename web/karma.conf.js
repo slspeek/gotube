@@ -19,7 +19,7 @@ module.exports = function(config) {
       'app/bower_components/angular-http-auth/src/http-auth-interceptor.js',
       'app/bower_components/angular-resource/angular-resource.js',
       'app/bower_components/angular-route/angular-route.js',
-      'app/bower_components/ngBase64/ngBase64.js',
+      'app/bower_components/ngBase64/angular-base64.js',
       'app/bower_components/flow.js/src/flow.js',
       'app/bower_components/ng-flow/src/directives/btn.js',
       'app/bower_components/ng-flow/src/directives/drop.js',
