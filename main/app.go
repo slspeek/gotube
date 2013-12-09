@@ -73,6 +73,7 @@ func main() {
 	videoService := rest.NewVideoResource(sess.Copy(), "test", "Video", &auth.Auth{authenticator.CheckAuth})
 	container := restful.NewContainer()
 	videoService.Register(container)
+  container.Filter(container.OPTIONSFilter)
 
 	r.HandleFunc("/serve/{video}", ba.JustCheck(authenticator, handleServe))
 	r.HandleFunc("/auth", authenticator.Wrap(auth.AuthService))

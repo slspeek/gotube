@@ -94,6 +94,7 @@ func (v VideoResource) Register(container *restful.Container) {
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
 
 	ws.Filter(v.auth.Filter)
+  
 	container.Add(ws)
 }
 

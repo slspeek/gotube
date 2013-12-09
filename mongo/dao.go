@@ -16,7 +16,11 @@ func NewDao(s *mgo.Session, db string, kind string) *Dao {
 func (self *Dao) Create(entity interface{}) (id string, err error) {
 	oid := bson.NewObjectId()
 	info, err := self.collection().UpsertId(oid, entity)
-	return info.UpsertedId.(bson.ObjectId).Hex(), err
+	if err != nil {
+		return
+	}
+	id = info.UpsertedId.(bson.ObjectId).Hex()
+	return
 }
 
 func (self *Dao) Get(id string, result interface{}) (err error) {
