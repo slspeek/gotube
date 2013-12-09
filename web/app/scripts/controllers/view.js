@@ -2,7 +2,7 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('ViewCtrl', function(ahttp, $scope, $routeParams, $sce, VideoResource) {
+    .controller('ViewCtrl', function($scope, $routeParams, $sce, VideoResource) {
       $scope.id = $routeParams.VideoId;
       var video = VideoResource.get({
         Id: $scope.id

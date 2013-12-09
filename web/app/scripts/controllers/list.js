@@ -2,9 +2,13 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('ListCtrl', function($scope, VideoResource, ahttp) {
+    .controller('ListCtrl', function($rootScope, $scope, VideoResource, principal) {
       $scope.videoList = VideoResource.getAll();
-      $scope.username = ahttp.username;
+      if (!principal.isAuthenticated()) {
+        $rootScope.$broadcast('event:auth-loginRequired');
+      } else {
+        $scope.username = principal.identity().name();
+      }
 
     });
 

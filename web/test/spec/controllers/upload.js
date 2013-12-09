@@ -15,7 +15,15 @@ describe('Controller: UploadCtrl', function () {
     UploadCtrl = $controller('UploadCtrl', {
       $scope: scope,
       $routeParams: {VideoId:'128'},
-      ahttp: {header: function() {return "My header";}}
+      principal: {
+        identity: function() {
+          return {
+            name: function() {
+              return 'steven';
+            }
+          };
+        }
+      }
     });
   }));
 
@@ -26,17 +34,8 @@ describe('Controller: UploadCtrl', function () {
 
   it('should produce options function ', function () {
     var opts = scope.options();
-    expect(opts.headers).toBe('My header');
     expect(opts.target).toBe('/upload/128');
 
-  });
-
-  it('should save', function () {
-    httpBackend.when('POST', '/api/videos').respond({Id: '124'});
-    scope.title = 'My video';
-    scope.save();
-    httpBackend.flush();
-    expect(scope.returnedId).toBe('124');
   });
 
   it('should copy VideoId from routeParam ', function () {

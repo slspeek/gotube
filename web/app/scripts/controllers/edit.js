@@ -2,10 +2,10 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('EditCtrl', function($scope, $location, ahttp, VideoResource) {
+    .controller('EditCtrl', function($scope, $location, principal, VideoResource) {
       $scope.save = function() {
         $scope.videoId = VideoResource.save({
-          'Owner': ahttp.username,
+          'Owner': principal.identity().name(),
           'Name': $scope.title,
           'Desc': $scope.description
         }, function(data) {

@@ -1,6 +1,6 @@
 'use strict';
 
-describe('Controller: LginFormCtrl', function () {
+describe('Controller: LoginFormCtrl', function () {
 
   // load the controller's module
   beforeEach(module('webApp'));
@@ -16,8 +16,4 @@ describe('Controller: LginFormCtrl', function () {
     });
   }));
 
-  it('should set username and password', function () {
-    expect(scope.username).toBe('steven');
-    expect(scope.password).toBe('gnu');
-  });
 });

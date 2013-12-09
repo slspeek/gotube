@@ -20,7 +20,8 @@
     "videogular-buffering": "*",
     "videogular-overlay-play": "*",
     "videogular-poster": "*",
-    "videogular-themes-default": "*"
+    "videogular-themes-default": "*",
+    "angular-authentication": "~1.0.4"
   },
   "devDependencies": {
     "angular-mocks": "*",
