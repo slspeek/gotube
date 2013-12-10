@@ -73,7 +73,7 @@ func main() {
 	videoService := rest.NewVideoResource(sess.Copy(), "test", "Video", &auth.Auth{authenticator.CheckAuth})
 	container := restful.NewContainer()
 	videoService.Register(container)
-  container.Filter(container.OPTIONSFilter)
+	container.Filter(container.OPTIONSFilter)
 
 	r.HandleFunc("/serve/{video}", ba.JustCheck(authenticator, handleServe))
 	r.HandleFunc("/auth", authenticator.Wrap(auth.AuthService))
@@ -83,5 +83,6 @@ func main() {
 
 	r.PathPrefix("/api/videos").Handler(container)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(os.Args[1])))
-	log.Fatal(http.ListenAndServeTLS(":8080", "cert.pem", "key.pem", r))
+	//log.Fatal(http.ListenAndServeTLS(":8080", "cert.pem", "key.pem", r))
+  log.Fatal(http.ListenAndServe(":8080", r))
 }
