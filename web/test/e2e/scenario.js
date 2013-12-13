@@ -1,6 +1,8 @@
-/* global by:false, element:false */
+/* global by:false, element:false , protractor:false */
 describe('Gotube proof of concept scenario', function() {
   'use strict';
+
+  var protractor;
 
   beforeEach(function() {
     browser.get('/');
@@ -19,9 +21,9 @@ describe('Gotube proof of concept scenario', function() {
       element(by.id('upload')).click();
       element(by.model('name')).sendKeys('Better life');
       element(by.id('desc')).sendKeys('Cartoon');
-      element(by.id('flow-btn-input-id')).sendKeys('/home/steven/projs/nog/src/github.com/slspeek/gotube/test-data/BetterLife_HighQuality.ogv');
-      //element(by.id('upload')).click();
-      //browser.sleep(3000);
+      element(by.id('flow-btn-input-id')).sendKeys(browser.params.testMovie);
+      //element(by.id('flow-btn-input-id')).sendKeys('test-data/BetterLife_HighQuality.ogv');
+      browser.sleep(3000);
       browser.get('/');
       expect(browser.getCurrentUrl()).toContain( '#/login');
       element(by.model('username')).clear();
