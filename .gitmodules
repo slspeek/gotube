@@ -1,0 +1,6 @@
+[submodule "web/app/components/flow.js"]
+	path = web/app/components/flow.js
+	url = git@github.com:slspeek/flow.js
+[submodule "web/app/components/ng-flow"]
+	path = web/app/components/ng-flow
+	url = git@github.com:slspeek/ng-flow

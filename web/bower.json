@@ -12,7 +12,6 @@
     "angular-sanitize": "*",
     "angular-resource": "*",
     "angular-route": "*",
-    "ng-flow": "~1",
     "angular-http-auth": "*",
     "ngBase64": "~2.0.0",
     "videogular": "*",
