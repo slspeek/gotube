@@ -1,13 +1,15 @@
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">{{username}}s videos</h3>
-  </div>
-  <div class="panel-body">
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h2 class="panel-title">{{username}}s videos</h2>
+    </div>
+    <div class="panel-body">
       <ul class="videos">
         <li ng-repeat="video in videoList">
         <a href="/#/view/{{video.Id}}/{{video.BlobId}}">{{video.Name}}</a>
         </li>
       </ul>
-      <a class="btn" href="/#/upload">Upload</a>
+      <a id="upload" class="btn btn-primary" href="/#/upload">Upload</a>
+    </div>
   </div>
 </div>

@@ -14,7 +14,6 @@ describe('Controller: UploadCtrl', function () {
     httpBackend = $httpBackend;
     UploadCtrl = $controller('UploadCtrl', {
       $scope: scope,
-      $routeParams: {VideoId:'128'},
       principal: {
         identity: function() {
           return {
@@ -22,6 +21,9 @@ describe('Controller: UploadCtrl', function () {
               return 'steven';
             }
           };
+        },
+        isAuthenticated: function() {
+          return true;
         }
       }
     });
@@ -32,13 +34,6 @@ describe('Controller: UploadCtrl', function () {
     httpBackend.verifyNoOutstandingRequest();
   });
 
-  it('should produce options function ', function () {
-    var opts = scope.options();
-    expect(opts.target).toBe('/upload/128');
+  
 
-  });
-
-  it('should copy VideoId from routeParam ', function () {
-    expect(scope.VideoId).toBe('128');
-  });
 });

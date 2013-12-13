@@ -15,39 +15,16 @@
     'com.2fdevs.videogular.plugins.overlayplay',
     'com.2fdevs.videogular.plugins.buffering',
     'com.2fdevs.videogular.plugins.poster'
-  ]).run(function($rootScope, $location, authService) {
-    console.log('Auth: ' + authService);
-    var service = {
-      presentLogin: function() {
-        var path = $location.path();
-        if (path !== '/login') {
-          this.storedPath = $location.path();
-        }
-        console.log('Stored: ' + this.storedPath);
-        $location.path('/login');
-      },
-      goBack: function() {
-        console.log('Going back to: ' + this.storedPath);
-        $location.path(this.storedPath);
-      }
+  ]).run(function($rootScope, authUtil) {
+    $rootScope.obj = {
+      flow: ''
     };
-    $rootScope.$on('event:auth-loginRequired', function() {
-      console.log('required');
-      service.presentLogin();
-    });
-    $rootScope.$on('event:auth-loginConfirmed', function() {
-      console.log('confirmed');
-      service.goBack();
-    });
+    console.log('Auth service injected: ' + authUtil);
   })
 
   .config(function($routeProvider) {
     $routeProvider
       .when('/upload', {
-        templateUrl: 'views/edit.html',
-        controller: 'EditCtrl'
-      })
-      .when('/upload/:VideoId', {
         templateUrl: 'views/upload.html',
         controller: 'UploadCtrl'
       })
@@ -73,9 +50,5 @@
       chunkRetryInterval: 5000,
       simultaneousUploads: 4
     };
-    flowFactoryProvider.on('success', function(event) {
-      console.log('catchAll', event);
-      console.dir(event);
-    });
   });
 })();

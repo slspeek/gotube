@@ -2,18 +2,35 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('UploadCtrl', function($location, $scope, $routeParams) {
-      $scope.VideoId = $routeParams.VideoId;
-      $scope.options = function() {
-        console.log('Options called');
-        return {
-          target: '/upload/' + $scope.VideoId
-        };
+    .controller('UploadCtrl', function($rootScope, $location, $scope, principal, VideoResource) {
+      if (!principal.isAuthenticated()) {
+        $rootScope.$broadcast('event:auth-loginRequired');
+      }
+      $scope.fileAdded = function(file) {
+        $scope.filename = file.file.name;
+        if ($scope.name === '') {
+          $scope.name = $scope.filename;
+        }
+        $scope.save();
       };
+      $scope.save = function() {
+        $scope.videoId = VideoResource.save({
+          'Owner': principal.identity().name(),
+          'Name': $scope.name,
+          'Desc': $scope.desc
+        }, function(data) {
+          $scope.setFlowTarget('/upload/' + data.Id);
+          $scope.obj.flow.upload();
+        });
+      };
+      $scope.name = '';
+      $scope.desc = '';
       $scope.success = function() {
-        console.log('it reached UploadCtrl');
         $location.replace();
         $location.path('list');
+      };
+      $scope.setFlowTarget = function(target) {
+        $scope.obj.flow.opts.target = target;
       };
     });
 
