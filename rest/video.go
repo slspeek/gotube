@@ -63,7 +63,7 @@ func (v VideoResource) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.
 		Path("/api/videos").
-		Consumes(restful.MIME_XML, restful.MIME_JSON).
+		Consumes(restful.MIME_XML, restful.MIME_JSON, "multipart/form-data").
 		Produces(restful.MIME_JSON, restful.MIME_XML)
 
 	ws.Route(ws.GET("").To(v.findAllVideos).
@@ -76,6 +76,8 @@ func (v VideoResource) Register(container *restful.Container) {
 		Doc("get a video").
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
 		Writes(Video{})) // on the response
+
+	ws.Route(ws.POST("/{video-id}/upload").To(v.uploadVideo).Doc("upload video content"))
 
 	ws.Route(ws.POST("").To(v.createVideo).
 		// docs
@@ -94,7 +96,7 @@ func (v VideoResource) Register(container *restful.Container) {
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
 
 	ws.Filter(v.auth.Filter)
-  
+
 	container.Add(ws)
 }
 
@@ -173,4 +175,7 @@ func (v *VideoResource) removeVideo(request *restful.Request, response *restful.
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, err.Error())
 	}
+}
+
+func (v *VideoResource) uploadVideo(request *restful.Request, Response *restful.Response) {
 }
