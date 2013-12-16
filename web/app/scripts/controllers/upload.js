@@ -19,7 +19,7 @@
           'Name': $scope.name,
           'Desc': $scope.desc
         }, function(data) {
-          $scope.setFlowTarget('/upload/' + data.Id);
+          $scope.setFlowTarget('/api/videos/' + data.Id + '/upload');
           $scope.obj.flow.upload();
         });
       };

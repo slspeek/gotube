@@ -32,7 +32,7 @@ func blobService() (bs *goblob.BlobService) {
 	if err != nil {
 		panic(err)
 	}
-	bs = goblob.NewBlobService(s, "test", "testfs")
+	bs = goblob.NewBlobService(s, "test", "flowfs")
 	return
 }
 
@@ -78,9 +78,10 @@ func PrepareRequests(url string, fn string, fs int64, chunkSize int64) (f flow.F
 	}
 	return
 }
+
 func TestUpload(t *testing.T) {
 	dao := dao(t)
-	v1 := Video{"", "", "Novocento", "", ""}
+	v1 := Video{"", "steven", "Novocento", "", ""}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
@@ -101,17 +102,87 @@ func TestUpload(t *testing.T) {
 		}
 	}
 
-	time.Sleep(time.Duration(6) * time.Second)
-	v2 := new(Video)
-	err = dao.Get(id, v2)
-	fid := v2.BlobId
-	file, err := bs.Open(fid)
-	if err != nil {
-		t.Fatal("Open file went south: ", err)
+	for i := 1; i < 200; i++ {
+		time.Sleep(time.Duration(100) * time.Millisecond)
+		v2 := new(Video)
+		v2.BlobId = ""
+		err = dao.Get(id, v2)
+		fid := v2.BlobId
+		if fid == "" {
+			continue
+		}
+		file, err := bs.Open(fid)
+		if err != nil {
+			continue
+		}
+		if file.MD5() != md5sum {
+			t.Fatal("Checksum of uploaded file mismatched")
+		}
 
+		t.Log("Checked")
+		bs.Remove(fid)
+		break
 	}
-	if file.MD5() != md5sum {
-		t.Fatal("Checksum of uploaded file mismatched")
+}
+
+func TestDownload(t *testing.T) {
+	dao := dao(t)
+	v1 := Video{"", "steven", "Novocento", "", ""}
+	id, err := dao.Create(v1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bs := blobService()
+	defer bs.Close()
+	ts := videoTestServer(t)
+	defer ts.Close()
+	url := ts.URL + "/api/videos/" + id + "/upload"
+	fl, requests, md5sum := PrepareRequests(url, "foo.data", 100*1024-4, 1024)
+	for i := 0; i < fl.TotalChunks; i++ {
+		resp, err := http.DefaultClient.Do(requests[i])
+		if err != nil {
+			t.Fatal("DefaultClient recieves error: ", err)
+		}
+		if resp.StatusCode != 200 {
+			t.Fatal("StatusCode should be 200, but was ", resp.StatusCode)
+		}
+	}
+	var fid string
+	for i := 1; i < 200; i++ {
+		time.Sleep(time.Duration(100) * time.Millisecond)
+		v2 := new(Video)
+		v2.BlobId = ""
+		err = dao.Get(id, v2)
+		fid = v2.BlobId
+		if fid == "" {
+			continue
+		}
+		file, err := bs.Open(fid)
+		if err != nil {
+			continue
+
+		}
+		if file.MD5() != md5sum {
+			t.Fatal("Checksum of uploaded file mismatched")
+		}
+		t.Log("Checked")
+		break
+	}
+
+	req, _ := http.NewRequest("GET", ts.URL+"/content/videos/"+id, nil)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal("Could not get, due to ", err)
+	}
+	if resp.StatusCode != 200 {
+		t.Fatal("Get Returned error: ", resp.StatusCode)
+	}
+	hash := md5.New()
+	io.Copy(hash, resp.Body)
+
+	readBackMD5 := fmt.Sprintf("%x", hash.Sum(nil))
+	if md5sum != readBackMD5 {
+		t.Fatal("Checksum of downloaded file mismatches: ", readBackMD5, md5sum)
 	}
 	bs.Remove(fid)
 }

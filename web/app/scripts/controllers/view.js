@@ -11,7 +11,7 @@
         $scope.desc = video.Desc;
       });
 
-      $scope.videoURL = $sce.trustAsResourceUrl('/serve/' + $routeParams.BlobId );
+      $scope.videoURL = $sce.trustAsResourceUrl('/content/videos/' + $routeParams.VideoId );
 
       $scope.stretchModes = [{
         label: 'None',

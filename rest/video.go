@@ -1,7 +1,9 @@
 package rest
 
 import (
+	"github.com/slspeek/flowgo"
 	"github.com/slspeek/go-restful"
+	"github.com/slspeek/goblob"
 	"github.com/slspeek/gotube/auth"
 	"github.com/slspeek/gotube/mongo"
 	"labix.org/v2/mgo"
@@ -16,13 +18,37 @@ type Video struct {
 }
 
 type VideoResource struct {
-	videos *mongo.Dao
-	auth   *auth.Auth
+	db          string
+	sess        *mgo.Session
+	videos      *mongo.Dao
+	auth        *auth.Auth
+	flowService *flow.UploadHandler
+}
+
+func (v *VideoResource) writeBackBlobId(r *http.Request, blobId string) {
+	id := r.URL.Path[12:36]
+	vid := new(Video)
+	err := v.videos.Get(id, vid)
+	if err != nil {
+		log.Println("Could not get video : ", id)
+	}
+	vid.BlobId = blobId
+	err = v.videos.Update(id, vid)
+	if err != nil {
+		log.Println("Could not update video : ", id)
+	}
+	log.Println("Updated video: ", id, " with BlobId: ", blobId)
 }
 
 func NewVideoResource(sess *mgo.Session, db string, collecion string, auth *auth.Auth) *VideoResource {
-	dao := mongo.NewDao(sess, db, collecion)
-	return &VideoResource{dao, auth}
+	v := new(VideoResource)
+	v.sess = sess.Copy()
+	v.db = db
+	v.auth = auth
+	v.videos = mongo.NewDao(sess.Copy(), db, collecion)
+  blobs := goblob.NewBlobService(sess.Copy(), db, "flowfs")
+	v.flowService = flow.NewUploadHandler(blobs, v.writeBackBlobId)
+	return v
 }
 
 func ObjectIdFilter(param string) restful.FilterFunction {
@@ -61,9 +87,13 @@ func (v VideoResource) Register(container *restful.Container) {
 	videoIdFilter := ObjectIdFilter("video-id")
 	ownerFilter := v.IsOwnerFilter("video-id")
 	ws := new(restful.WebService)
+	ws2 := new(restful.WebService)
+	ws2.
+		Path("/content/videos") /*.Produces("application/octet-stream")*/
 	ws.
 		Path("/api/videos").
 		Consumes(restful.MIME_XML, restful.MIME_JSON, "multipart/form-data").
+		//Consumes(restful.MIME_XML, restful.MIME_JSON).
 		Produces(restful.MIME_JSON, restful.MIME_XML)
 
 	ws.Route(ws.GET("").To(v.findAllVideos).
@@ -77,12 +107,17 @@ func (v VideoResource) Register(container *restful.Container) {
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
 		Writes(Video{})) // on the response
 
-	ws.Route(ws.POST("/{video-id}/upload").To(v.uploadVideo).Doc("upload video content"))
+	ws2.Route(ws.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveVideo).
+		// docs
+		Doc("download a video").
+		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
 
 	ws.Route(ws.POST("").To(v.createVideo).
 		// docs
 		Doc("create a video").
 		Reads(Video{})) // from the request
+
+	ws.Route(ws.POST("/{video-id}/upload").To(v.uploadVideo).Doc("upload video content"))
 
 	ws.Route(ws.PUT("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.updateVideo).
 		// docs
@@ -96,8 +131,10 @@ func (v VideoResource) Register(container *restful.Container) {
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
 
 	ws.Filter(v.auth.Filter)
+	ws2.Filter(v.auth.Filter)
 
 	container.Add(ws)
+	container.Add(ws2)
 }
 
 func (v VideoResource) findVideo(request *restful.Request, response *restful.Response) {
@@ -121,11 +158,9 @@ func (v *VideoResource) createVideo(request *restful.Request, response *restful.
 	vid := Video{Id: bson.NewObjectId()}
 	err := request.ReadEntity(&vid)
 	user := request.Attribute("username")
-	log.Print("Create video called")
 	if err == nil {
 		if user == vid.Owner {
 			id, err := v.videos.Create(vid)
-			log.Print("After create video called", err)
 			if err != nil {
 				response.AddHeader("Content-Type", "text/plain")
 				response.WriteErrorString(http.StatusInternalServerError, err.Error())
@@ -142,6 +177,7 @@ func (v *VideoResource) createVideo(request *restful.Request, response *restful.
 		log.Print("Could not read back", err)
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusBadRequest, err.Error())
+		return
 	}
 }
 
@@ -165,6 +201,7 @@ func (v *VideoResource) updateVideo(request *restful.Request, response *restful.
 	} else {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusBadRequest, err.Error())
+		return
 	}
 }
 
@@ -174,8 +211,32 @@ func (v *VideoResource) removeVideo(request *restful.Request, response *restful.
 	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
 	}
 }
 
-func (v *VideoResource) uploadVideo(request *restful.Request, Response *restful.Response) {
+func (v *VideoResource) uploadVideo(request *restful.Request, response *restful.Response) {
+	v.flowService.ServeHTTP(response.ResponseWriter, request.Request)
+}
+
+func (v *VideoResource) serveVideo(request *restful.Request, response *restful.Response) {
+	video := request.Attribute("video-object").(*Video)
+	var fid string
+	if fid = video.BlobId; fid == "" {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusNoContent, "No Video blobid set yet")
+		return
+	}
+	sess := v.sess.Copy()
+	bs := goblob.NewBlobService(sess, v.db, "flowfs")
+	blobHandle, err := bs.Open(fid)
+	if err != nil {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusInternalServerError, "Video could not be opened")
+		return
+	}
+
+	http.ServeContent(response.ResponseWriter, request.Request, "", blobHandle.UploadDate(), blobHandle)
+	blobHandle.Close()
+	bs.Close()
 }
