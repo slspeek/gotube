@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/slspeek/go-restful"
 	"github.com/slspeek/gotube/auth"
+	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
 	"io"
 	"labix.org/v2/mgo"
@@ -15,7 +16,7 @@ import (
 )
 
 var (
-	NOVECENTO     = Video{Owner: "steven", Name: "Novecento", Desc: "Italian classic"}
+	NOVECENTO     = common.Video{Owner: "steven", Name: "Novecento", Desc: "Italian classic"}
 	allwaysSteven = func(*http.Request) string { return "steven" }
 	allwaysNobody = func(*http.Request) string { return "" }
 )
@@ -96,7 +97,7 @@ func TestInvalidIdFind(t *testing.T) {
 
 func TestNotOwnerFind(t *testing.T) {
 	dao := dao(t)
-	v1 := Video{"", "rob", "Novocento", "", ""}
+	v1 := common.Video{"", "rob", "Novocento", "", ""}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
@@ -147,7 +148,7 @@ func TestInvalidIdUpdate(t *testing.T) {
 
 func TestNotOwnerUpdate(t *testing.T) {
 	dao := dao(t)
-	v1 := Video{"", "rob", "Novocento", "", ""}
+	v1 := common.Video{"", "rob", "Novocento", "", ""}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
@@ -199,7 +200,7 @@ func TestInvalidIdRemove(t *testing.T) {
 
 func TestNotOwnerRemove(t *testing.T) {
 	dao := dao(t)
-	v1 := Video{"", "rob", "Novocento", "", ""}
+	v1 := common.Video{"", "rob", "Novocento", "", ""}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
@@ -286,7 +287,7 @@ func TestVideoResource(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	dao := dao(t)
-	v1 := Video{"", "", "Novocento", "", ""}
+	v1 := common.Video{"", "", "Novocento", "", ""}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
@@ -332,7 +333,7 @@ func TestUpdateUnit(t *testing.T) {
 		t.Fatal("StatusCode: ", rw.Code)
 	}
 	dao := dao(t)
-	readBack := new(Video)
+	readBack := new(common.Video)
 	err := dao.Get(id, &readBack)
 	if err != nil {
 		t.Fatal(err)
@@ -373,7 +374,7 @@ func TestRemoveUnit(t *testing.T) {
 	if rw.Code != http.StatusOK {
 		t.Fatal("StatusCode: ", rw.Code)
 	}
-	readBack := make([]Video, 1)
+	readBack := make([]common.Video, 1)
 	err := dao.GetAll(&readBack)
 	if err != nil {
 		t.Fatal(err)
@@ -387,17 +388,17 @@ func TestGetAllUnit(t *testing.T) {
 	//t.Skip()
 	dao := dao(t)
 	dao.DeleteAll()
-	v1 := Video{"", "steven", "Novocento", "", ""}
+	v1 := common.Video{"", "steven", "Novocento", "", ""}
 	_, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	v2 := Video{"", "steven", "The spiderwoman", "", ""}
+	v2 := common.Video{"", "steven", "The spiderwoman", "", ""}
 	_, err = dao.Create(v2)
 	if err != nil {
 		t.Fatal(err)
 	}
-	v3 := Video{"", "jan", "At the gates", "", ""}
+	v3 := common.Video{"", "jan", "At the gates", "", ""}
 	_, err = dao.Create(v3)
 	if err != nil {
 		t.Fatal(err)

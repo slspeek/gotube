@@ -1,10 +1,12 @@
 package rest
 
 import (
+	"fmt"
 	"github.com/slspeek/flowgo"
 	"github.com/slspeek/go-restful"
 	"github.com/slspeek/goblob"
 	"github.com/slspeek/gotube/auth"
+	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -12,10 +14,6 @@ import (
 	"net/http"
 )
 
-type Video struct {
-	Id                        bson.ObjectId "_id,omitempty"
-	Owner, Name, Desc, BlobId string
-}
 
 type VideoResource struct {
 	db          string
@@ -27,7 +25,7 @@ type VideoResource struct {
 
 func (v *VideoResource) writeBackBlobId(r *http.Request, blobId string) {
 	id := r.URL.Path[12:36]
-	vid := new(Video)
+	vid := new(common.Video)
 	err := v.videos.Get(id, vid)
 	if err != nil {
 		log.Println("Could not get video : ", id)
@@ -66,7 +64,7 @@ func (v VideoResource) IsOwnerFilter(param string) restful.FilterFunction {
 	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 		id := req.PathParameter(param)
 		user := req.Attribute("username")
-		vid := new(Video)
+		vid := new(common.Video)
 		err := v.videos.Get(id, &vid)
 		if err != nil {
 			resp.AddHeader("Content-Type", "text/plain")
@@ -96,16 +94,20 @@ func (v VideoResource) Register(container *restful.Container) {
 		//Consumes(restful.MIME_XML, restful.MIME_JSON).
 		Produces(restful.MIME_JSON, restful.MIME_XML)
 
+	ws.Route(ws.GET("/playlist").To(v.playlist).
+		// docs
+		Doc("get a playlist for all your videos").
+		Writes(common.Video{})) // on the response
 	ws.Route(ws.GET("").To(v.findAllVideos).
 		// docs
 		Doc("get all your videos").
-		Writes(Video{})) // on the response
+		Writes(common.Video{})) // on the response
 
 	ws.Route(ws.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.findVideo).
 		// docs
 		Doc("get a video").
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
-		Writes(Video{})) // on the response
+		Writes(common.Video{})) // on the response
 
 	ws2.Route(ws.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveVideo).
 		// docs
@@ -115,7 +117,7 @@ func (v VideoResource) Register(container *restful.Container) {
 	ws.Route(ws.POST("").To(v.createVideo).
 		// docs
 		Doc("create a video").
-		Reads(Video{})) // from the request
+		Reads(common.Video{})) // from the request
 
 	ws.Route(ws.POST("/{video-id}/upload").To(v.uploadVideo).Doc("upload video content"))
 
@@ -123,7 +125,7 @@ func (v VideoResource) Register(container *restful.Container) {
 		// docs
 		Doc("update a video").
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
-		Reads(Video{})) // from the request
+		Reads(common.Video{})) // from the request
 
 	ws.Route(ws.DELETE("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.removeVideo).
 		// docs
@@ -144,7 +146,7 @@ func (v VideoResource) findVideo(request *restful.Request, response *restful.Res
 
 func (v VideoResource) findAllVideos(request *restful.Request, response *restful.Response) {
 	user := request.Attribute("username")
-	vid := make([]Video, 10)
+	vid := make([]common.Video, 10)
 	err := v.videos.Find(bson.M{"owner": user}, &vid)
 	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
@@ -154,8 +156,35 @@ func (v VideoResource) findAllVideos(request *restful.Request, response *restful
 	}
 }
 
+
+func (v VideoResource) playlist(request *restful.Request, response *restful.Response) {
+	user := request.Attribute("username")
+	vid := make([]common.Video, 10)
+	err := v.videos.Find(bson.M{"owner": user}, &vid)
+	if err != nil {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusInternalServerError, "Error retrieving videos")
+	} else {
+    log.Printf("URL: %#v ", request.Request.RequestURI)
+    log.Printf("Host: %#v ", request.Request.Host)
+    playlist := "<smil><body><seq>"
+    for i :=0; i< len(vid); i++ {
+      playlist += videoTag(vid[i], "http://" + request.Request.Host)
+    }
+
+
+
+    playlist += "</seq></body></smil>"
+    fmt.Fprint(response.ResponseWriter, playlist)
+	}
+}
+
+func videoTag(vid common.Video, domain string) string {
+  return fmt.Sprintf(`<video src="%s/content/videos/%s" />`,domain, vid.Id.Hex())
+}
+
 func (v *VideoResource) createVideo(request *restful.Request, response *restful.Response) {
-	vid := Video{Id: bson.NewObjectId()}
+	vid := common.Video{Id: bson.NewObjectId()}
 	err := request.ReadEntity(&vid)
 	user := request.Attribute("username")
 	if err == nil {
@@ -183,7 +212,7 @@ func (v *VideoResource) createVideo(request *restful.Request, response *restful.
 
 func (v *VideoResource) updateVideo(request *restful.Request, response *restful.Response) {
 	id := request.PathParameter("video-id")
-	vid := &Video{Id: bson.ObjectIdHex(id)}
+	vid := &common.Video{Id: bson.ObjectIdHex(id)}
 	user := request.Attribute("username")
 	err := request.ReadEntity(&vid)
 	if err == nil {
@@ -220,7 +249,7 @@ func (v *VideoResource) uploadVideo(request *restful.Request, response *restful.
 }
 
 func (v *VideoResource) serveVideo(request *restful.Request, response *restful.Response) {
-	video := request.Attribute("video-object").(*Video)
+	video := request.Attribute("video-object").(*common.Video)
 	var fid string
 	if fid = video.BlobId; fid == "" {
 		response.AddHeader("Content-Type", "text/plain")

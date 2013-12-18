@@ -8,6 +8,7 @@ import (
 	"github.com/slspeek/go-restful"
 	"github.com/slspeek/goblob"
 	"github.com/slspeek/gotube/auth"
+	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
 	"io"
 	"labix.org/v2/mgo"
@@ -105,7 +106,7 @@ func TestUpload(t *testing.T) {
 	var i int
 	for i = 1; i < 200; i++ {
 		time.Sleep(time.Duration(100) * time.Millisecond)
-		v2 := new(Video)
+		v2 := new(common.Video)
 		v2.BlobId = ""
 		err = dao.Get(id, v2)
 		fid := v2.BlobId
@@ -167,7 +168,7 @@ func TestDownload(t *testing.T) {
 	io.Copy(out, buf)
 	fid := out.Id()
 	out.Close()
-	v := new(Video)
+	v := new(common.Video)
 	err = dao.Get(id, v)
 	if err != nil {
 		t.Fatal("Could not reload video")
@@ -216,7 +217,7 @@ func TestConcurrentDownloads(t *testing.T) {
 	io.Copy(out, buf)
 	fid := out.Id()
 	out.Close()
-	v := new(Video)
+	v := new(common.Video)
 	err = dao.Get(id, v)
 	if err != nil {
 		t.Fatal("Could not reload video")
@@ -282,7 +283,7 @@ func BenchmarkConcurrentDownloads(b *testing.B) {
 	io.Copy(out, buf)
 	fid := out.Id()
 	out.Close()
-	v := new(Video)
+	v := new(common.Video)
 	err = dao.Get(id, v)
 	if err != nil {
 		b.Fatal("Could not reload video")
