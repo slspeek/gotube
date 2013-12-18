@@ -94,13 +94,14 @@ func (v VideoResource) Register(container *restful.Container) {
 		//Consumes(restful.MIME_XML, restful.MIME_JSON).
 		Produces(restful.MIME_JSON, restful.MIME_XML)
 
-	ws.Route(ws.GET("/playlist").To(v.playlist).
-		// docs
-		Doc("get a playlist for all your videos").
-		Writes(common.Video{})) // on the response
 	ws.Route(ws.GET("").To(v.findAllVideos).
 		// docs
 		Doc("get all your videos").
+		Writes(common.Video{})) // on the response
+
+	ws.Route(ws.GET("/playlist").To(v.playlist).
+		// docs
+		Doc("get a playlist for all your videos").
 		Writes(common.Video{})) // on the response
 
 	ws.Route(ws.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.findVideo).
