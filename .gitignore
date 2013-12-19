@@ -2,6 +2,7 @@ node_modules
 gotube.test
 mongo/mongo.test
 rest/rest.test
+auth/auth.test
 web/npm-debug.log
 bower_components
 src

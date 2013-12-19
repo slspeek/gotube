@@ -50,5 +50,7 @@
       chunkRetryInterval: 5000,
       simultaneousUploads: 4
     };
+  }).config(function($httpProvider) {
+    $httpProvider.defaults.headers.common['Do-Not-Challenge'] = 'True';
   });
 })();

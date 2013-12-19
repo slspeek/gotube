@@ -20,8 +20,10 @@ func (self *Auth) Filter(req *restful.Request, resp *restful.Response, chain *re
 		req.SetAttribute("username", username)
 		chain.ProcessFilter(req, resp)
 	} else {
-    resp.AddHeader("WWW-Authenticate", "Basic realm=gotube.org")
-		resp.WriteErrorString(http.StatusUnauthorized, "No username provided")
+		if req.Request.Header.Get("Do-Not-Challenge") != "True" {
+			resp.AddHeader("WWW-Authenticate", "Basic realm=gotube.org")
+		}
+    resp.WriteErrorString(http.StatusUnauthorized, "No username provided")
 	}
 }
 
