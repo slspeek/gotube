@@ -204,7 +204,7 @@ func (v *VideoResource) createVideo(request *restful.Request, response *restful.
 			return
 		}
 	} else {
-		log.Print("Could not read back", err)
+		log.Print("Could not read back ", err)
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusBadRequest, err.Error())
 		return

@@ -5,7 +5,6 @@ import (
 )
 
 type Video struct {
-	Id                        bson.ObjectId "_id,omitempty"
+  Id bson.ObjectId `_id,omitempty`
 	Owner, Name, Desc, BlobId string
 }
-
