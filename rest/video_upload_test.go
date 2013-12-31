@@ -166,7 +166,7 @@ func TestDownload(t *testing.T) {
 		t.Fatal("Could not create new grid file")
 	}
 	io.Copy(out, buf)
-	fid := out.Id()
+	fid := out.StringId()
 	out.Close()
 	v := new(common.Video)
 	err = dao.Get(id, v)
@@ -215,7 +215,7 @@ func TestConcurrentDownloads(t *testing.T) {
 		t.Fatal("Could not create new grid file")
 	}
 	io.Copy(out, buf)
-	fid := out.Id()
+	fid := out.StringId()
 	out.Close()
 	v := new(common.Video)
 	err = dao.Get(id, v)
@@ -281,7 +281,7 @@ func BenchmarkConcurrentDownloads(b *testing.B) {
 		b.Fatal("Could not create new grid file")
 	}
 	io.Copy(out, buf)
-	fid := out.Id()
+	fid := out.StringId()
 	out.Close()
 	v := new(common.Video)
 	err = dao.Get(id, v)
