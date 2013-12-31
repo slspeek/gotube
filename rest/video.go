@@ -166,15 +166,10 @@ func (v VideoResource) playlist(request *restful.Request, response *restful.Resp
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "Error retrieving videos")
 	} else {
-    log.Printf("URL: %#v ", request.Request.RequestURI)
-    log.Printf("Host: %#v ", request.Request.Host)
     playlist := "<smil><body><seq>"
     for i :=0; i< len(vid); i++ {
       playlist += videoTag(vid[i], "http://" + request.Request.Host)
     }
-
-
-
     playlist += "</seq></body></smil>"
     fmt.Fprint(response.ResponseWriter, playlist)
 	}

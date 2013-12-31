@@ -21,6 +21,51 @@ var (
 	allwaysNobody = func(*http.Request) string { return "" }
 )
 
+func dao(t *testing.T) *mongo.Dao {
+	sess, err := mgo.Dial("localhost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return mongo.NewDao(sess, "test", "Video")
+}
+
+func createNovecento(t *testing.T) (id string) {
+	dao := dao(t)
+	id, err := dao.Create(NOVECENTO)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return
+}
+
+func videoResource(t *testing.T, checker auth.CheckAuthFunc) *VideoResource {
+	sess, err := mgo.Dial("localhost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return NewVideoResource(sess, "test", "Video", &auth.Auth{checker})
+}
+
+func videoTestServer(t *testing.T) *httptest.Server {
+	return httptest.NewServer(loadedContainer(t, allwaysSteven))
+}
+
+func loadedContainer(t *testing.T, checker auth.CheckAuthFunc) *restful.Container {
+	vr := videoResource(t, checker)
+	container := restful.NewContainer()
+	vr.Register(container)
+	return container
+}
+
+func TestVideoTag(t *testing.T) {
+  tag := videoTag(NOVECENTO, "host")
+  if tag != `<video src="host/content/videos/" />` {
+    t.Log(tag)
+    t.Fatal("Wrong video tag")
+  }
+  
+}
+
 // Test Matrix
 //   Properties:
 //   IsOwner
@@ -82,6 +127,31 @@ func TestSuccessFindAll(t *testing.T) {
 	container.ServeHTTP(rw, req)
 	if rw.Code != http.StatusOK {
 		t.Fatal("Should have been OK, but was: ", rw.Code)
+	}
+}
+func TestNotAuthorizedPlaylist(t *testing.T) {
+	container := loadedContainer(t, allwaysNobody)
+	req, _ := http.NewRequest("GET", "/api/videos/playlist", nil)
+	rw := httptest.NewRecorder()
+	container.ServeHTTP(rw, req)
+	if rw.Code != http.StatusUnauthorized {
+		t.Fatal("Should have been unauthorized, but was: ", rw.Code)
+	}
+}
+
+func TestSuccessPlaylist(t *testing.T) {
+	//createNovecento(t)
+  dao := dao(t);
+  dao.DeleteAll()
+	container := loadedContainer(t, allwaysSteven)
+	req, _ := http.NewRequest("GET", "/api/videos/playlist", nil)
+	rw := httptest.NewRecorder()
+	container.ServeHTTP(rw, req)
+	if rw.Code != http.StatusOK {
+		t.Fatal("Should have been OK, but was: ", rw.Code)
+	}
+  if body := rw.Body.String() ; body != `<smil><body><seq></seq></body></smil>` {
+		t.Fatal("Expected ", body)
 	}
 }
 
@@ -237,42 +307,6 @@ func TestSuccessRemove(t *testing.T) {
 	}
 }
 
-func dao(t *testing.T) *mongo.Dao {
-	sess, err := mgo.Dial("localhost")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return mongo.NewDao(sess, "test", "Video")
-}
-
-func createNovecento(t *testing.T) (id string) {
-	dao := dao(t)
-	id, err := dao.Create(NOVECENTO)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return
-}
-
-func videoResource(t *testing.T, checker auth.CheckAuthFunc) *VideoResource {
-	sess, err := mgo.Dial("localhost")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return NewVideoResource(sess, "test", "Video", &auth.Auth{checker})
-}
-
-func videoTestServer(t *testing.T) *httptest.Server {
-	return httptest.NewServer(loadedContainer(t, allwaysSteven))
-}
-
-func loadedContainer(t *testing.T, checker auth.CheckAuthFunc) *restful.Container {
-	vr := videoResource(t, checker)
-	container := restful.NewContainer()
-	vr.Register(container)
-	return container
-}
-
 func TestVideoResource(t *testing.T) {
 	ts := videoTestServer(t)
 	defer ts.Close()
@@ -357,68 +391,4 @@ func TestCreate(t *testing.T) {
 	if rw.Code != http.StatusCreated {
 		t.Fatal("StatusCode: ", rw.Code)
 	}
-}
-
-func TestRemoveUnit(t *testing.T) {
-	dao := dao(t)
-	dao.DeleteAll()
-	id := createNovecento(t)
-	vr := videoResource(t, allwaysSteven)
-	req, _ := http.NewRequest("DELETE", "", nil)
-	rreq := restful.NewRequest(req, &[]byte{}, map[string]string{"video-id": id}, map[string]interface{}{"username": "steven"})
-
-	rw := httptest.NewRecorder()
-	rresp := restful.NewResponse(rw, "application/json", []string{"application/json"})
-
-	vr.removeVideo(rreq, rresp)
-	if rw.Code != http.StatusOK {
-		t.Fatal("StatusCode: ", rw.Code)
-	}
-	readBack := make([]common.Video, 1)
-	err := dao.GetAll(&readBack)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(readBack) != 0 {
-		t.Fatal("Expected no elemements")
-	}
-}
-
-func TestGetAllUnit(t *testing.T) {
-	//t.Skip()
-	dao := dao(t)
-	dao.DeleteAll()
-	v1 := common.Video{"", "steven", "Novocento", "", ""}
-	_, err := dao.Create(v1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	v2 := common.Video{"", "steven", "The spiderwoman", "", ""}
-	_, err = dao.Create(v2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	v3 := common.Video{"", "jan", "At the gates", "", ""}
-	_, err = dao.Create(v3)
-	if err != nil {
-		t.Fatal(err)
-	}
-	vr := videoResource(t, allwaysSteven)
-	req, _ := http.NewRequest("GET", "", nil)
-	//req.Header["Content-Type"] = []string{"application/json"}
-	rreq := restful.NewRequest(req, &[]byte{}, map[string]string{}, map[string]interface{}{"username": "steven"})
-
-	rw := httptest.NewRecorder()
-	rresp := restful.NewResponse(rw, "application/json", []string{"application/json"})
-
-	vr.findAllVideos(rreq, rresp)
-	if rw.Code != http.StatusOK {
-		t.Fatal("StatusCode: ", rw.Code)
-	}
-	rb := rw.Body.String()
-	//t.Log("Body: ", rb, len(rb))
-	if len(rb) != 255 {
-		t.Fatal("Unexpected output from findAllVideos")
-	}
-	dao.DeleteAll()
 }
