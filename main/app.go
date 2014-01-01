@@ -26,6 +26,7 @@ func check(err error) {
 
 var noSsl = flag.Bool("no-ssl", false, "run without SSL")
 var dbName = flag.String("db", "gotube", "name of the mongodb to use")
+var pwFile = flag.String("pw", "htpasswd", "path of the html password file")
 
 func main() {
 	flag.Parse()
@@ -43,7 +44,7 @@ func main() {
 
 	r := mux.NewRouter()
 
-	authenticator := auth.Authenticator("htpasswd")
+	authenticator := auth.Authenticator(*pwFile)
 	videoService := rest.NewVideoResource(sess.Copy(), *dbName, "Video", &auth.Auth{authenticator.CheckAuth})
 	container := restful.NewContainer()
 	videoService.Register(container)
