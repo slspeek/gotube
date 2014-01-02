@@ -5,11 +5,6 @@ import (
   "testing"
 )
 
-func TestIsACommand(t *testing.T) {
-  main()
-  
-}
-
 func TestParseArgsNoneGiven(t *testing.T) {
   _, _,_, err := parseArgs([]string{"gtput"})
   if err.Error() != "usage: gtput filename [name] [description]" {
