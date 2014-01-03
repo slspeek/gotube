@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"github.com/slspeek/go-restful"
+	"github.com/slspeek/goblob"
 	"github.com/slspeek/gotube/auth"
 	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
@@ -21,6 +22,21 @@ var (
 	allwaysNobody = func(*http.Request) string { return "" }
 )
 
+func insertLittleBlob() (id string, err error) {
+	sess, err := mgo.Dial("localhost")
+	if err != nil {
+		return
+	}
+	bs := goblob.NewBlobService(sess, "test", "flowfs")
+	file, err := bs.Create("foo")
+	if err != nil {
+		return
+	}
+	fmt.Fprint(file, "Hello")
+	err = file.Close()
+	id = file.StringId()
+	return
+}
 func dao(t *testing.T) *mongo.Dao {
 	sess, err := mgo.Dial("localhost")
 	if err != nil {
@@ -58,12 +74,12 @@ func loadedContainer(t *testing.T, checker auth.CheckAuthFunc) *restful.Containe
 }
 
 func TestVideoTag(t *testing.T) {
-  tag := videoTag(NOVECENTO, "host")
-  if tag != `<video src="host/content/videos/" />` {
-    t.Log(tag)
-    t.Fatal("Wrong video tag")
-  }
-  
+	tag := videoTag(NOVECENTO, "host")
+	if tag != `<video src="host/content/videos/" />` {
+		t.Log(tag)
+		t.Fatal("Wrong video tag")
+	}
+
 }
 
 // Test Matrix
@@ -140,9 +156,8 @@ func TestNotAuthorizedPlaylist(t *testing.T) {
 }
 
 func TestSuccessPlaylist(t *testing.T) {
-	//createNovecento(t)
-  dao := dao(t);
-  dao.DeleteAll()
+	dao := dao(t)
+	dao.DeleteAll()
 	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("GET", "/api/videos/playlist", nil)
 	rw := httptest.NewRecorder()
@@ -150,7 +165,7 @@ func TestSuccessPlaylist(t *testing.T) {
 	if rw.Code != http.StatusOK {
 		t.Fatal("Should have been OK, but was: ", rw.Code)
 	}
-  if body := rw.Body.String() ; body != `<smil><body><seq></seq></body></smil>` {
+	if body := rw.Body.String(); body != `<smil><body><seq></seq></body></smil>` {
 		t.Fatal("Expected ", body)
 	}
 }
@@ -296,7 +311,7 @@ func TestNotAuthorizedRemove(t *testing.T) {
 	}
 }
 
-func TestSuccessRemove(t *testing.T) {
+func TestSuccessRemoveWithoutBlob(t *testing.T) {
 	id := createNovecento(t)
 	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("DELETE", "/api/videos/"+id, nil)
@@ -305,6 +320,51 @@ func TestSuccessRemove(t *testing.T) {
 	if rw.Code != http.StatusOK {
 		t.Fatal("Should have been ok, but was: ", rw.Code)
 	}
+	dao := dao(t)
+	err := dao.Get(id, new(common.Video))
+	if err == nil {
+		t.Fatal("Should have been removed")
+	}
+}
+
+func TestSuccessRemoveWithBlob(t *testing.T) {
+  dao := dao(t)
+	id := createNovecento(t)
+  blobid, err := insertLittleBlob()
+  if err != nil {
+    t.Fatal("Could not create little file")
+  }
+  vid := new(common.Video)
+  err = dao.Get(id, vid)
+  if err != nil {
+    t.Fatal("Could not reload Video")
+  }
+  vid.BlobId = blobid
+  err = dao.Update(id, vid)
+  if err != nil {
+    t.Fatal("Could not save video")
+  }
+	container := loadedContainer(t, allwaysSteven)
+	req, _ := http.NewRequest("DELETE", "/api/videos/"+id, nil)
+	rw := httptest.NewRecorder()
+	container.ServeHTTP(rw, req)
+	if rw.Code != http.StatusOK {
+		t.Fatal("Should have been ok, but was: ", rw.Code)
+	}
+	err = dao.Get(id, new(common.Video))
+	if err == nil {
+		t.Fatal("Should have been removed")
+	}
+
+	sess, err := mgo.Dial("localhost")
+	if err != nil {
+		return
+	}
+	bs := goblob.NewBlobService(sess, "test", "flowfs")
+  _, err = bs.Open(blobid)
+  if err == nil {
+    t.Fatal("Blob Should have been removed")
+  }
 }
 
 func TestVideoResource(t *testing.T) {

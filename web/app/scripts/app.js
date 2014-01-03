@@ -40,6 +40,15 @@
         templateUrl: 'views/login.html',
         controller: 'LoginFormCtrl'
       })
+      .when('/remove/:VideoId', {
+        templateUrl: 'views/remove.html',
+        controller: 'RemoveCtrl',
+        resolve: {
+          Video: function(videoLoader) {
+            return videoLoader();
+          }
+        }
+      })
       .otherwise({
         redirectTo: '/list'
       });

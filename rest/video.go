@@ -14,7 +14,6 @@ import (
 	"net/http"
 )
 
-
 type VideoResource struct {
 	db          string
 	sess        *mgo.Session
@@ -44,7 +43,7 @@ func NewVideoResource(sess *mgo.Session, db string, collecion string, auth *auth
 	v.db = db
 	v.auth = auth
 	v.videos = mongo.NewDao(sess.Copy(), db, collecion)
-  blobs := goblob.NewBlobService(sess.Copy(), db, "flowfs")
+	blobs := goblob.NewBlobService(sess.Copy(), db, "flowfs")
 	v.flowService = flow.NewUploadHandler(blobs, v.writeBackBlobId)
 	return v
 }
@@ -157,7 +156,6 @@ func (v VideoResource) findAllVideos(request *restful.Request, response *restful
 	}
 }
 
-
 func (v VideoResource) playlist(request *restful.Request, response *restful.Response) {
 	user := request.Attribute("username")
 	vid := make([]common.Video, 10)
@@ -166,17 +164,17 @@ func (v VideoResource) playlist(request *restful.Request, response *restful.Resp
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "Error retrieving videos")
 	} else {
-    playlist := "<smil><body><seq>"
-    for i :=0; i< len(vid); i++ {
-      playlist += videoTag(vid[i], "http://" + request.Request.Host)
-    }
-    playlist += "</seq></body></smil>"
-    fmt.Fprint(response.ResponseWriter, playlist)
+		playlist := "<smil><body><seq>"
+		for i := 0; i < len(vid); i++ {
+			playlist += videoTag(vid[i], "http://"+request.Request.Host)
+		}
+		playlist += "</seq></body></smil>"
+		fmt.Fprint(response.ResponseWriter, playlist)
 	}
 }
 
 func videoTag(vid common.Video, domain string) string {
-  return fmt.Sprintf(`<video src="%s/content/videos/%s" />`,domain, vid.Id.Hex())
+	return fmt.Sprintf(`<video src="%s/content/videos/%s" />`, domain, vid.Id.Hex())
 }
 
 func (v *VideoResource) createVideo(request *restful.Request, response *restful.Response) {
@@ -231,6 +229,18 @@ func (v *VideoResource) updateVideo(request *restful.Request, response *restful.
 }
 
 func (v *VideoResource) removeVideo(request *restful.Request, response *restful.Response) {
+	video := request.Attribute("video-object").(*common.Video)
+	if video.BlobId != "" {
+		sess := v.sess.Copy()
+		bs := goblob.NewBlobService(sess, v.db, "flowfs")
+		defer bs.Close()
+		err := bs.Remove(video.BlobId)
+		if err != nil {
+			response.AddHeader("Content-Type", "text/plain")
+			response.WriteErrorString(http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
 	id := request.PathParameter("video-id")
 	err := v.videos.Delete(id)
 	if err != nil {
@@ -254,6 +264,7 @@ func (v *VideoResource) serveVideo(request *restful.Request, response *restful.R
 	}
 	sess := v.sess.Copy()
 	bs := goblob.NewBlobService(sess, v.db, "flowfs")
+	defer bs.Close()
 	blobHandle, err := bs.Open(fid)
 	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
@@ -263,5 +274,4 @@ func (v *VideoResource) serveVideo(request *restful.Request, response *restful.R
 
 	http.ServeContent(response.ResponseWriter, request.Request, "", blobHandle.UploadDate(), blobHandle)
 	blobHandle.Close()
-	bs.Close()
 }

@@ -7,6 +7,7 @@
       <ul class="videos">
         <li ng-repeat="video in videoList">
         <a href="/#/view/{{video.Id}}/{{video.BlobId}}">{{video.Name}}</a>
+        <a href="/#/remove/{{video.Id}}">Remove</a>
         </li>
       </ul>
       <a id="upload" class="btn btn-primary" href="/#/upload">Upload</a>

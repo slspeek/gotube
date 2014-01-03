@@ -1,5 +1,5 @@
 'use strict';
-describe('Controller: MainCtrl', function() {
+describe('Service: VideoResource', function() {
 
   var $httpBackend;
   var video;

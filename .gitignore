@@ -4,6 +4,7 @@ mongo/mongo.test
 rest/rest.test
 auth/auth.test
 web/npm-debug.log
+web/test-results.xml
 client/gtput/gtput.test
 bower_components
 src
