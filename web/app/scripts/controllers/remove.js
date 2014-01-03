@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('webApp')
-  .controller('RemoveCtrl', function ($scope, Video, $timeout, $location) {
+  .controller('RemoveCtrl', function($scope, Video, $timeout, $location) {
     $scope.video = Video;
     $scope.remove = function() {
       console.log('Video before delete' + $scope.video);
@@ -9,7 +9,7 @@ angular.module('webApp')
         $scope.message = 'Video was removed';
         $timeout(function() {
           $location.path('/list');
-          }, 1000);
+        }, 1000);
       });
     };
     $scope.cancel = function() {
