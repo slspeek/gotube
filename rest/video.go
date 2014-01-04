@@ -120,6 +120,7 @@ func (v VideoResource) Register(container *restful.Container) {
 		Reads(common.Video{})) // from the request
 
 	ws.Route(ws.POST("/{video-id}/upload").To(v.uploadVideo).Doc("upload video content"))
+	ws.Route(ws.GET("/{video-id}/upload").To(v.uploadVideo).Doc("check if we already have video content"))
 
 	ws.Route(ws.PUT("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.updateVideo).
 		// docs
