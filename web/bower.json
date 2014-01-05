@@ -14,7 +14,7 @@
     "angular-route": "*",
     "angular-http-auth": "~1.2.0",
     "ngBase64": "~2.0.0",
-    "videogular": "#686013ad97",
+    "videogular": "*",
     "videogular-controls": "0.2.0",
     "videogular-buffering": "0.2.0",
     "videogular-overlay-play": "0.2.0",
