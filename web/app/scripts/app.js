@@ -28,9 +28,18 @@
         templateUrl: 'views/upload.html',
         controller: 'UploadCtrl'
       })
+      .when('/fileview', {
+        templateUrl: 'views/view.html',
+        controller: 'FileViewCtrl'
+      })
       .when('/view/:VideoId/:BlobId', {
         templateUrl: 'views/view.html',
-        controller: 'ViewCtrl'
+        controller: 'ViewCtrl',
+        resolve: {
+          Video: function(videoLoader) {
+            return videoLoader();
+          }
+        }
       })
       .when('/list', {
         templateUrl: 'views/list.html',
