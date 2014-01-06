@@ -41,7 +41,7 @@ describe('Gotube proof of concept scenario', function() {
       expect(browser.getCurrentUrl()).toContain('#/list');
       expect(element(by.tagName('body')).getText()).not.toContain('Better life');
 
-    }, 10000);
+    }, 20000);
 
 
 });
