@@ -328,22 +328,22 @@ func TestSuccessRemoveWithoutBlob(t *testing.T) {
 }
 
 func TestSuccessRemoveWithBlob(t *testing.T) {
-  dao := dao(t)
+	dao := dao(t)
 	id := createNovecento(t)
-  blobid, err := insertLittleBlob()
-  if err != nil {
-    t.Fatal("Could not create little file")
-  }
-  vid := new(common.Video)
-  err = dao.Get(id, vid)
-  if err != nil {
-    t.Fatal("Could not reload Video")
-  }
-  vid.BlobId = blobid
-  err = dao.Update(id, vid)
-  if err != nil {
-    t.Fatal("Could not save video")
-  }
+	blobid, err := insertLittleBlob()
+	if err != nil {
+		t.Fatal("Could not create little file")
+	}
+	vid := new(common.Video)
+	err = dao.Get(id, vid)
+	if err != nil {
+		t.Fatal("Could not reload Video")
+	}
+	vid.BlobId = blobid
+	err = dao.Update(id, vid)
+	if err != nil {
+		t.Fatal("Could not save video")
+	}
 	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("DELETE", "/api/videos/"+id, nil)
 	rw := httptest.NewRecorder()
@@ -361,10 +361,10 @@ func TestSuccessRemoveWithBlob(t *testing.T) {
 		return
 	}
 	bs := goblob.NewBlobService(sess, "test", "flowfs")
-  _, err = bs.Open(blobid)
-  if err == nil {
-    t.Fatal("Blob Should have been removed")
-  }
+	_, err = bs.Open(blobid)
+	if err == nil {
+		t.Fatal("Blob Should have been removed")
+	}
 }
 
 func TestVideoResource(t *testing.T) {
@@ -397,58 +397,76 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestFindUnit(t *testing.T) {
-	id := createNovecento(t)
-	vr := videoResource(t, allwaysSteven)
-	req, _ := http.NewRequest("GET", "", nil)
-	rreq := restful.NewRequest(req, &[]byte{}, map[string]string{"video-id": id}, map[string]interface{}{"username": "steven"})
-
+func TestInvalidIdDownload(t *testing.T) {
+	container := loadedContainer(t, allwaysSteven)
+	req, _ := http.NewRequest("GET", "/content/videos/999/download", nil)
 	rw := httptest.NewRecorder()
-	rresp := restful.NewResponse(rw, "application/json", []string{"application/json"})
-
-	vr.findVideo(rreq, rresp)
-	if rw.Code != http.StatusOK {
-		t.Fatal("StatusCode: ", rw.Code)
+	container.ServeHTTP(rw, req)
+	if rw.Code != http.StatusBadRequest {
+		t.Fatal("Should have been StatusBadRequest, but was: ", rw.Code)
 	}
 }
-func TestUpdateUnit(t *testing.T) {
-	id := createNovecento(t)
-	vr := videoResource(t, allwaysSteven)
-	reqBody := fmt.Sprintf(`{"Id":"%s","Name":"Novecento II","Owner":"steven"}`, id)
-	req, _ := http.NewRequest("PUT", "", strings.NewReader(reqBody))
-	req.Header["Content-Type"] = []string{"application/json"}
-	rreq := restful.NewRequest(req, &[]byte{}, map[string]string{"video-id": id}, map[string]interface{}{"username": "steven"})
 
-	rw := httptest.NewRecorder()
-	rresp := restful.NewResponse(rw, "application/json", []string{"application/json"})
-
-	vr.updateVideo(rreq, rresp)
-	if rw.Code != http.StatusOK {
-		t.Fatal("StatusCode: ", rw.Code)
-	}
+func TestNotOwnerDownload(t *testing.T) {
 	dao := dao(t)
-	readBack := new(common.Video)
-	err := dao.Get(id, &readBack)
+	v1 := common.Video{"", "rob", "Novocento", "", ""}
+	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if readBack.Name != "Novecento II" {
-		t.Fatal("Expected the sequel")
+	container := loadedContainer(t, allwaysSteven)
+	req, _ := http.NewRequest("GET", "/content/videos/"+id+"/download", nil)
+	rw := httptest.NewRecorder()
+	container.ServeHTTP(rw, req)
+	if rw.Code != http.StatusForbidden {
+		t.Fatal("Should have been StatusForbidden, but was: ", rw.Code)
 	}
 }
 
-func TestCreate(t *testing.T) {
-	vr := videoResource(t, allwaysSteven)
-	reqBody := fmt.Sprintf(`{"Name":"Prison break","Owner":"steven"}`)
-	req, _ := http.NewRequest("PUT", "", strings.NewReader(reqBody))
-	req.Header["Content-Type"] = []string{"application/json"}
-	rreq := restful.NewRequest(req, &[]byte{}, map[string]string{}, map[string]interface{}{"username": "steven"})
-
+func TestNotAuthorizedDownload(t *testing.T) {
+	id := createNovecento(t)
+	container := loadedContainer(t, allwaysNobody)
+	req, _ := http.NewRequest("GET", "/content/videos/"+id+"/download", nil)
 	rw := httptest.NewRecorder()
-	rresp := restful.NewResponse(rw, "application/json", []string{"application/json"})
-
-	vr.createVideo(rreq, rresp)
-	if rw.Code != http.StatusCreated {
-		t.Fatal("StatusCode: ", rw.Code)
+	container.ServeHTTP(rw, req)
+	if rw.Code != http.StatusUnauthorized {
+		t.Fatal("Should have been unauthorized, but was: ", rw.Code)
 	}
+
+}
+
+func TestSuccessDownload(t *testing.T) {
+	dao := dao(t)
+	id := createNovecento(t)
+	blobid, err := insertLittleBlob()
+	if err != nil {
+		t.Fatal("Could not create little file")
+	}
+	vid := new(common.Video)
+	err = dao.Get(id, vid)
+	if err != nil {
+		t.Fatal("Could not reload Video")
+	}
+	vid.BlobId = blobid
+	err = dao.Update(id, vid)
+	if err != nil {
+		t.Fatal("Could not save video")
+	}
+	container := loadedContainer(t, allwaysSteven)
+	req, _ := http.NewRequest("GET", "/content/videos/"+id+"/download", nil)
+	rw := httptest.NewRecorder()
+	container.ServeHTTP(rw, req)
+	if rw.Code != http.StatusOK {
+		t.Fatal("Should have been Ok, but was: ", rw.Code)
+	}
+	contentType := rw.Header().Get("Content-Type")
+	if contentType != "application/octet-stream" {
+		t.Fatal("Expected octet-stream, got: ", contentType)
+	}
+
+	disposition := rw.Header().Get("Content-Disposition")
+	if disposition != `attachment; filename="foo"` {
+		t.Fatal("Expected attachment got: ", disposition)
+	}
+
 }

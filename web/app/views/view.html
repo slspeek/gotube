@@ -1,7 +1,8 @@
 <div class="panel">
-  <h1>{{name}}</h1>
-  <p>{{desc}}</p>
-  <hr />
+
+    <center>
+    <h1>{{name}}</h1>
+    </center>
   <div class="container">
     <div>
       <videogular vg-width="config.width" vg-height="config.height"
@@ -39,5 +40,11 @@
       </vg-controls>
       </videogular>
     </div>
+    <center>
+    <p class="lead">{{desc}}</p>
+    <div><a class="btn btn-primary" ng-href="{{downloadURL}}">Download</a>
+      <a ng-href="/#/list" class="btn btn-info">Video listing</a></div>
+    <a ng-href="/#/upload" class="btn btn-success">Upload</a>
+    <center>
   </div>
-</div>
+s</div>

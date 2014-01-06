@@ -8,6 +8,7 @@ import (
 	"github.com/slspeek/gotube/auth"
 	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
+	"io"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -110,6 +111,11 @@ func (v VideoResource) Register(container *restful.Container) {
 		Writes(common.Video{})) // on the response
 
 	ws2.Route(ws.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveVideo).
+		// docs
+		Doc("stream a video").
+		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
+
+	ws2.Route(ws.GET("/{video-id}/download").Filter(videoIdFilter).Filter(ownerFilter).To(v.downloadVideo).
 		// docs
 		Doc("download a video").
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
@@ -267,6 +273,7 @@ func (v *VideoResource) serveVideo(request *restful.Request, response *restful.R
 	bs := goblob.NewBlobService(sess, v.db, "flowfs")
 	defer bs.Close()
 	blobHandle, err := bs.Open(fid)
+	defer bs.Close()
 	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "Video could not be opened")
@@ -274,5 +281,33 @@ func (v *VideoResource) serveVideo(request *restful.Request, response *restful.R
 	}
 
 	http.ServeContent(response.ResponseWriter, request.Request, "", blobHandle.UploadDate(), blobHandle)
-	blobHandle.Close()
+}
+
+func (v *VideoResource) downloadVideo(request *restful.Request, response *restful.Response) {
+	video := request.Attribute("video-object").(*common.Video)
+	var fid string
+	if fid = video.BlobId; fid == "" {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusNoContent, "No Video blobid set yet")
+		return
+	}
+	sess := v.sess.Copy()
+	bs := goblob.NewBlobService(sess, v.db, "flowfs")
+	defer bs.Close()
+	blobHandle, err := bs.Open(fid)
+  defer blobHandle.Close()
+	if err != nil {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusInternalServerError, "Video could not be opened")
+		return
+	}
+
+  response.AddHeader("Content-Type", "application/octet-stream");
+  response.AddHeader("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, blobHandle.Name()))
+	_, err = io.Copy(response.ResponseWriter, blobHandle)
+	if err != nil {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusInternalServerError, "Video could not be copied to the response")
+		return
+	}
 }

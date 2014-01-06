@@ -8,6 +8,7 @@
       $scope.desc = $scope.video.Desc;
       $scope.id = $scope.video.Id;
       $scope.videoURL = $sce.trustAsResourceUrl('/content/videos/' + $routeParams.VideoId );
+      $scope.downloadURL = '/content/videos/' + $routeParams.VideoId + '/download';
 
       $scope.stretchModes = [{
         label: 'None',

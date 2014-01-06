@@ -29,4 +29,7 @@ describe('Controller: ViewCtrl', function() {
   it('should attach name to the scope', function() {
     expect(scope.id).toBe('345');
   });
+  it('should attach downloadURL to the scope', function() {
+    expect(scope.downloadURL).toBe('/content/videos/345/download');
+  });
 });
