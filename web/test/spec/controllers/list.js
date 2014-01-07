@@ -6,10 +6,11 @@ describe('Controller: ListCtrl', function() {
   beforeEach(module('webApp'));
 
   var ListCtrl,
-    scope, httpBackend;
+    scope, httpBackend, Page;
 
   // Initialize the controller and a mock scope
-  beforeEach(inject(function($controller, $rootScope, $httpBackend) {
+  beforeEach(inject(function($controller, $rootScope, $httpBackend, _Page_) {
+    Page = _Page_;
     httpBackend = $httpBackend;
     httpBackend.when('GET', '/api/videos').respond([]);
     scope = $rootScope.$new();
@@ -43,6 +44,11 @@ describe('Controller: ListCtrl', function() {
   it('should add username to the scope', function() {
     httpBackend.flush();
     expect(scope.username).toBe('steven');
+  });
+
+  it('should set the title to Listing', function() {
+    expect(Page.title()).toBe('Listing');
+    httpBackend.flush();
   });
 });
 

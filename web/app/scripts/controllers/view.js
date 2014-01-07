@@ -2,9 +2,10 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('ViewCtrl', function($scope, $routeParams, $sce, Video) {
+    .controller('ViewCtrl', function($scope, $routeParams, $sce, Video, Page) {
       $scope.video = Video;
       $scope.name = $scope.video.Name;
+      Page.setTitle($scope.name);
       $scope.desc = $scope.video.Desc;
       $scope.id = $scope.video.Id;
       $scope.videoURL = $sce.trustAsResourceUrl('/content/videos/' + $routeParams.VideoId );

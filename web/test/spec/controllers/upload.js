@@ -6,10 +6,11 @@ describe('Controller: UploadCtrl', function () {
   beforeEach(module('webApp'));
 
   var UploadCtrl,
-    scope, httpBackend;
+    scope, httpBackend, Page;
 
   // Initialize the controller and a mock scope
-  beforeEach(inject(function ($controller, $rootScope, $httpBackend) {
+  beforeEach(inject(function ($controller, $rootScope, $httpBackend, _Page_) {
+    Page = _Page_;
     scope = $rootScope.$new();
     httpBackend = $httpBackend;
     UploadCtrl = $controller('UploadCtrl', {
@@ -32,6 +33,10 @@ describe('Controller: UploadCtrl', function () {
   afterEach(function() {
     httpBackend.verifyNoOutstandingExpectation();
     httpBackend.verifyNoOutstandingRequest();
+  });
+
+  it('should set the title to upload', function() {
+    expect(Page.title()).toBe('Upload');
   });
 
   

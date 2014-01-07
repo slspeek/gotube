@@ -2,7 +2,8 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('UploadCtrl', function($rootScope, $location, $scope, principal, VideoResource) {
+    .controller('UploadCtrl', function($rootScope, $location, $scope, principal, VideoResource, Page) {
+      Page.setTitle('Upload');
       if (!principal.isAuthenticated()) {
         $rootScope.$broadcast('event:auth-loginRequired');
       }

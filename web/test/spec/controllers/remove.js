@@ -6,18 +6,23 @@ describe('Controller: RemoveCtrl', function () {
   beforeEach(module('webApp'));
 
   var RemoveCtrl,
-    scope;
+    scope, Page;
 
   // Initialize the controller and a mock scope
-  beforeEach(inject(function ($controller, $rootScope) {
+  beforeEach(inject(function ($controller, $rootScope, _Page_) {
+    Page = _Page_;
     scope = $rootScope.$new();
     RemoveCtrl = $controller('RemoveCtrl', {
       $scope: scope,
-      Video: {}
+      Video: {Name: 'Novecento'}
     });
   }));
 
-  it('should attach a list of awesomeThings to the scope', function () {
+  it('should attach video object to the scope', function () {
     expect(scope.video).toBeDefined();
+  });
+
+  it('should set the title to remove {name}', function() {
+    expect(Page.title()).toBe('Remove Novecento?');
   });
 });
