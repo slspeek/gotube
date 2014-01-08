@@ -8,6 +8,8 @@
           var path = $location.path();
           if (path !== '/login') {
             this.storedPath = $location.path();
+          } else {
+            return;
           }
           console.log('Stored: ' + this.storedPath);
           $location.path('/login');

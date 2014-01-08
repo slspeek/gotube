@@ -12,3 +12,6 @@ pkg
 *~
 *.swp
 test-data
+web/app/direct
+web/cobertura
+web/coverage
