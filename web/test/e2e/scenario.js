@@ -26,13 +26,13 @@ describe('Gotube proof of concept scenario', function() {
       element(by.id('flow-btn-input-id')).sendKeys(browser.params.testMovie);
       browser.sleep(3000);
       browser.get('/');
-      login();
+      //login();
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.linkText('Better life')).click();
       expect(element(by.binding('{{name}}')).getText()).toBe('Better life');
       expect(element(by.binding('{{desc}}')).getText()).toBe('Cartoon');
       browser.get('/');
-      login();
+      //login();
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.linkText('Remove')).click();
       expect(browser.getCurrentUrl()).toContain('#/remove');

@@ -2,11 +2,9 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('UploadCtrl', function($rootScope, $location, $scope, principal, VideoResource, Page) {
+    .controller('UploadCtrl', function($rootScope, $location, $scope, VideoResource, Page, UserName) {
       Page.setTitle('Upload');
-      if (!principal.isAuthenticated()) {
-        $rootScope.$broadcast('event:auth-loginRequired');
-      }
+      $scope.username = UserName;
       $scope.fileAdded = function(file) {
         $scope.filename = file.file.name;
         if ($scope.name === '') {
@@ -16,7 +14,7 @@
       };
       $scope.save = function() {
         $scope.videoId = VideoResource.save({
-          'Owner': principal.identity().name(),
+          'Owner': $scope.username,
           'Name': $scope.name,
           'Desc': $scope.desc
         }, function(data) {

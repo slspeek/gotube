@@ -147,7 +147,7 @@ describe('Service: authUtil', function() {
       $httpBackend = $injector.get('$httpBackend');
 
 
-      $httpBackend.when('POST', 'auth').respond({
+      $httpBackend.when('GET', 'auth').respond({
         username: 'foo'
       });
     }));

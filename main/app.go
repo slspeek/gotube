@@ -44,13 +44,13 @@ func main() {
 
 	r := mux.NewRouter()
 
-	authenticator := auth.Authenticator(*pwFile)
+	authenticator := auth.NewAuthenticator(*pwFile)
 	videoService := rest.NewVideoResource(sess.Copy(), *dbName, "Video", &auth.Auth{authenticator.CheckAuth})
 	container := restful.NewContainer()
 	videoService.Register(container)
 	container.Filter(container.OPTIONSFilter)
 
-	r.HandleFunc("/auth", authenticator.Wrap(auth.AuthService))
+	r.HandleFunc("/auth", authenticator.AuthService)
 
 	r.PathPrefix("/api/videos").Handler(container)
 	r.PathPrefix("/content/videos").Handler(container)

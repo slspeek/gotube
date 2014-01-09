@@ -27,18 +27,30 @@ func (self *Auth) Filter(req *restful.Request, resp *restful.Response, chain *re
 	}
 }
 
-func Authenticator(passwdFile string) *auth.BasicAuth {
+func NewAuthenticator(passwdFile string) Authenticator {
 	provider := auth.HtpasswdFileProvider(passwdFile)
-	return auth.NewBasicAuthenticator("gotube.org", provider)
+	return Authenticator{auth.NewBasicAuthenticator("gotube.org", provider)}
 }
 
-func AuthService(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
+type Authenticator struct {
+  *auth.BasicAuth
+}
+
+func (auth *Authenticator) AuthService(w http.ResponseWriter, r *http.Request) {
 	userinfo := make(bson.M)
-	userinfo["username"] = r.Username
+  username := auth.CheckAuth(r)
+  if username != "" {
+	userinfo["username"] = username
 	b, err := json.Marshal(userinfo)
 	if err != nil {
 		http.Error(w, "Unable to marshal", http.StatusInternalServerError)
 		return
 	}
 	w.Write(b)
+} else {
+		if r.Header.Get("Do-Not-Challenge") != "True" {
+    w.Header().Add("WWW-Authenticate", "Basic realm=gotube.org")
+  }
+    http.Error(w, "Not authenticated", http.StatusUnauthorized)
+  }
 }

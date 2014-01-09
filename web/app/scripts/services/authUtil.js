@@ -30,7 +30,7 @@
           var xmlHttp = new XMLHttpRequest();
           xmlHttp.open('GET', 'auth', false, username, password);
           xmlHttp.send(null);
-          $http.post('auth', {
+          $http.get('auth', {
             headers: {
               'Content-Type': 'application/json'
             }

@@ -26,7 +26,12 @@
     $routeProvider
       .when('/upload', {
         templateUrl: 'views/upload.html',
-        controller: 'UploadCtrl'
+        controller: 'UploadCtrl',
+        resolve: {
+          UserName: function(userLoader) {
+            return userLoader();
+          }
+        }
       })
       .when('/fileview', {
         templateUrl: 'views/view.html',
@@ -43,7 +48,12 @@
       })
       .when('/list', {
         templateUrl: 'views/list.html',
-        controller: 'ListCtrl'
+        controller: 'ListCtrl',
+        resolve: {
+          UserName: function(userLoader) {
+            return userLoader();
+          }
+        }
       })
       .when('/login', {
         templateUrl: 'views/login.html',
