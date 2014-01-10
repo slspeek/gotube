@@ -19,7 +19,7 @@
     $rootScope.obj = {
       flow: ''
     };
-    console.log('Auth service injected: ' + authUtil);
+    (function() {}(authUtil));
   })
 
   .config(function($routeProvider) {
@@ -36,6 +36,18 @@
       .when('/fileview', {
         templateUrl: 'views/view.html',
         controller: 'FileViewCtrl'
+      })
+      .when('/edit/:VideoId', {
+        templateUrl: 'views/edit.html',
+        controller: 'EditCtrl',
+        resolve: {
+          Video: function(videoLoader) {
+            return videoLoader();
+          },
+          UserName: function(userLoader) {
+            return userLoader();
+          }
+        }
       })
       .when('/view/:VideoId/:BlobId', {
         templateUrl: 'views/view.html',

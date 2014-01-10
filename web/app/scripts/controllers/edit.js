@@ -2,19 +2,15 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('EditCtrl', function($scope, $location, principal, VideoResource) {
+    .controller('EditCtrl', function($scope, $location, UserName, Video, VideoResource, Page) {
+      Page.setTitle('Edit');
+      $scope.UserName = UserName;
+      $scope.Video = Video;
       $scope.save = function() {
-        $scope.videoId = VideoResource.save({
-          'Owner': principal.identity().name(),
-          'Name': $scope.title,
-          'Desc': $scope.description
-        }, function(data) {
-          console.log(data.Id);
-          $location.path('/upload/' + data.Id);
+        VideoResource.update($scope.Video, function() {
+          $location.path('/list');
         });
       };
-      $scope.title = '';
-      $scope.description = '';
     });
 
 })();
