@@ -29,12 +29,12 @@ describe('Gotube proof of concept scenario', function() {
       //login();
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.linkText('Better life')).click();
-      expect(element(by.binding('{{name}}')).getText()).toBe('Better life');
-      expect(element(by.binding('{{desc}}')).getText()).toBe('Cartoon');
+      expect(element(by.binding('{{video.Name}}')).getText()).toBe('Better life');
+      expect(element(by.binding('{{video.Desc}}')).getText()).toBe('Cartoon');
       browser.get('/');
       //login();
       expect(browser.getCurrentUrl()).toContain('#/list');
-      element(by.linkText('Remove')).click();
+      element(by.className('glyphicon-remove')).click();
       expect(browser.getCurrentUrl()).toContain('#/remove');
       element(by.linkText('Remove')).click();
       browser.sleep(1000);

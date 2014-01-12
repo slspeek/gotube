@@ -4,13 +4,23 @@
       <h2 class="panel-title">{{username}}s videos</h2>
     </div>
     <div class="panel-body">
-      <ul class="videos">
-        <li ng-repeat="video in videoList">
-        <a href="/#/view/{{video.Id}}/{{video.BlobId}}">{{video.Name}}</a>
-        <a href="/#/edit/{{video.Id}}">Edit</a>
-        <a href="/#/remove/{{video.Id}}">Remove</a>
-        </li>
-      </ul>
+      <table class="table table-bordered">
+        <tr ng-repeat="video in videoList">
+          <td>
+        <a href="/#/view/{{video.Id}}">{{video.Name}}</a>
+      </td>
+      <td>
+        <a href="/#/edit/{{video.Id}}"> 
+          <span class="glyphicon glyphicon-pencil"></span>
+        </a>
+      </td>
+      <td>
+        <a href="/#/remove/{{video.Id}}">
+          <span class="glyphicon glyphicon-remove"></span>
+        </a>
+        </td>
+      </tr>
+      </table>
       <a id="upload" class="btn btn-success" href="/#/upload">Upload</a>
     </div>
   </div>

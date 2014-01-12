@@ -21,14 +21,14 @@ describe('Controller: ViewCtrl', function() {
 
 
 
-  it('should attach name to the scope', function() {
-    expect(scope.name).toBe('Novecento');
+  it('should attach video to the scope', function() {
+    expect(scope.video).toBeDefined();
   });
   it('should attach desc to the scope', function() {
-    expect(scope.desc).toBe('Italian classic');
+    expect(scope.video.Desc).toBe('Italian classic');
   });
   it('should attach name to the scope', function() {
-    expect(scope.id).toBe('345');
+    expect(scope.video.Id).toBe('345');
   });
   it('should attach downloadURL to the scope', function() {
     expect(scope.downloadURL).toBe('/content/videos/345/download');

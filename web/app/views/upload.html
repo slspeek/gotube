@@ -2,8 +2,12 @@
   <div class="container">
     <div class=row>
       <h2>Upload video</h2>
-      <label accesskey="t" for="name">Title</label><input ng-model="name" type="TEXT" />
-      <label accesskey="d" for="desc">Description</label><TEXTAREA id="desc" ng-model="desc" type="TEXT" />
+      <div class="form-group">
+      <label accesskey="t" for="name">Title</label><input class="form-control" ng-model="name" type="TEXT" />
+      </div>
+      <div class="form-group">
+      <label accesskey="d" for="desc">Description</label><TEXTAREA id="desc" class="form-control" ng-model="desc" type="TEXT" />
+        </div>
       </div>
 
       <div ng-flow-init="{}" ng-file-added="fileAdded($file, $event)" ng-file-success="success()" ng-flow-name="obj.flow" >

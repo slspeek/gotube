@@ -25,6 +25,8 @@ module.exports = function(config) {
       'app/bower_components/angular-resource/angular-resource.js',
       'app/bower_components/angular-route/angular-route.js',
       'app/bower_components/ngBase64/angular-base64.js',
+      'app/bower_components/angular-bootstrap/ui-bootstrap.js',
+      'app/bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
       'app/components/flow.js/src/flow.js',
       'app/components/ng-flow/src/directives/btn.js',
       'app/components/ng-flow/src/directives/drop.js',

@@ -2,14 +2,12 @@
   'use strict';
 
   angular.module('webApp')
-    .controller('ViewCtrl', function($scope, $routeParams, $sce, Video, Page) {
+    .controller('ViewCtrl', function($scope,  $sce, Video, Page) {
       $scope.video = Video;
-      $scope.name = $scope.video.Name;
-      Page.setTitle($scope.name);
-      $scope.desc = $scope.video.Desc;
-      $scope.id = $scope.video.Id;
-      $scope.videoURL = $sce.trustAsResourceUrl('/content/videos/' + $routeParams.VideoId );
-      $scope.downloadURL = '/content/videos/' + $routeParams.VideoId + '/download';
+      Page.setTitle(Video.Name);
+      var id = Video.Id;
+      $scope.videoURL = $sce.trustAsResourceUrl('/content/videos/' + id);
+      $scope.downloadURL = '/content/videos/' + id + '/download';
 
       $scope.stretchModes = [{
         label: 'None',

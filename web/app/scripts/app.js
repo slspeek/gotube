@@ -14,7 +14,8 @@
     'com.2fdevs.videogular.plugins.controls',
     'com.2fdevs.videogular.plugins.overlayplay',
     'com.2fdevs.videogular.plugins.buffering',
-    'com.2fdevs.videogular.plugins.poster'
+    'com.2fdevs.videogular.plugins.poster',
+    'ui.bootstrap'
   ]).run(function($rootScope, authUtil) {
     $rootScope.obj = {
       flow: ''
@@ -49,7 +50,7 @@
           }
         }
       })
-      .when('/view/:VideoId/:BlobId', {
+      .when('/view/:VideoId', {
         templateUrl: 'views/view.html',
         controller: 'ViewCtrl',
         resolve: {
