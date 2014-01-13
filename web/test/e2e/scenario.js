@@ -24,7 +24,7 @@ describe('Gotube proof of concept scenario', function() {
       element(by.model('name')).sendKeys('Better life');
       element(by.id('desc')).sendKeys('Cartoon');
       element(by.id('flow-btn-input-id')).sendKeys(browser.params.testMovie);
-      browser.sleep(3000);
+      //browser.sleep(3000);
       browser.get('/');
       //login();
       expect(browser.getCurrentUrl()).toContain('#/list');

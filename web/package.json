@@ -34,12 +34,13 @@
     "karma-requirejs": "~0.2.1",
     "karma-coffee-preprocessor": "~0.1.0",
     "karma-phantomjs-launcher": "~0.1.0",
-    "karma-ng-scenario" : "*",
+    "karma-ng-scenario": "*",
     "karma-junit-reporter": "*",
     "karma": "~0.10.4",
     "grunt-karma": "~0.6.2",
-    "istanbul":"~0.2.3",
-    "karma-coverage": "~0.1.4"
+    "istanbul": "~0.2.3",
+    "karma-coverage": "~0.1.4",
+    "karma-cli": "0.0.3"
   },
   "engines": {
     "node": ">=0.8.0"
