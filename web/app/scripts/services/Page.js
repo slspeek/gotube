@@ -5,7 +5,7 @@ factory('Page', function($rootScope, $location) {
   var title = 'Gotube';
   var onUpload = false;
   var onMyVideos = false;
-  $rootScope.$on('$routeChangeSuccess', function(ev, current, previous) {
+  $rootScope.$on('$routeChangeSuccess', function() {
     var current =  $location.path();
     console.log('current: ' + current);
     if (current === '/upload') {
