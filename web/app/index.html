@@ -2,7 +2,7 @@
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
   <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
     <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-      <!--[if gt IE 8]><!--> <html class="no-js" ng-app="webApp"i ng-controller="TitleCtrl"> <!--<![endif]-->
+      <!--[if gt IE 8]><!--> <html class="no-js" ng-app="webApp" ng-controller="TitleCtrl"> <!--<![endif]-->
         <head>
           <meta charset="utf-8">
           <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -45,10 +45,10 @@
                 </div>
                 <div class="navbar-collapse collapse" collapse="false">
                   <ul class="nav navbar-nav">
-                    <li><a href="/#/list">My videos</a></li>
+                    <li ng-class="{active: Page.onMyVideos() }" ><a href="/#/list">My videos</a></li>
                   </ul>
                   <ul class="nav navbar-nav navbar-right">
-                    <li><a href="/#/upload">Upload</a></li>
+                    <li ng-class="{active: Page.onUpload() }" ><a href="/#/upload">Upload</a></li>
                   </ul>
                   </div>
                 </div><!--/.nav-collapse -->
