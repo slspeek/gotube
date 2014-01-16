@@ -1,4 +1,5 @@
 node_modules
+thumb/thumb.test
 gotube.test
 mongo/mongo.test
 rest/rest.test
