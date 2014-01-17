@@ -7,19 +7,26 @@
       <table class="table table-bordered">
         <tr ng-repeat="video in videoList">
           <td>
-        <a href="/#/view/{{video.Id}}">{{video.Name}}</a>
-      </td>
-      <td>
-        <a href="/#/edit/{{video.Id}}"> 
-          <span class="glyphicon glyphicon-pencil"></span>
-        </a>
-      </td>
-      <td>
-        <a href="/#/remove/{{video.Id}}">
-          <span class="glyphicon glyphicon-remove"></span>
-        </a>
-        </td>
-      </tr>
+            <a href="/#/view/{{video.Id}}">{{video.Name}}</a>
+          </td>
+          <td>
+            <img width=128 ng-src="/content/videos/{{video.Id}}/thumbs/0" />
+            <img width=128 ng-src="/content/videos/{{video.Id}}/thumbs/1" />
+            <img width=128 ng-src="/content/videos/{{video.Id}}/thumbs/2" />
+            <img width=128 ng-src="/content/videos/{{video.Id}}/thumbs/3" />
+            <img width=128 ng-src="/content/videos/{{video.Id}}/thumbs/4" />
+          </td>
+          <td>
+            <a href="/#/edit/{{video.Id}}"> 
+              <span class="glyphicon glyphicon-pencil"></span>
+            </a>
+          </td>
+          <td>
+            <a href="/#/remove/{{video.Id}}">
+              <span class="glyphicon glyphicon-remove"></span>
+            </a>
+          </td>
+        </tr>
       </table>
       <a id="upload" class="btn btn-success" href="/#/upload">Upload</a>
     </div>

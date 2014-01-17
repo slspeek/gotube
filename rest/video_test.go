@@ -182,7 +182,7 @@ func TestInvalidIdFind(t *testing.T) {
 
 func TestNotOwnerFind(t *testing.T) {
 	dao := dao(t)
-	v1 := common.Video{"", "rob", "Novocento", "", ""}
+  v1 := common.Video{Owner:"rob", Name:"Novocento"}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
@@ -233,7 +233,7 @@ func TestInvalidIdUpdate(t *testing.T) {
 
 func TestNotOwnerUpdate(t *testing.T) {
 	dao := dao(t)
-	v1 := common.Video{"", "rob", "Novocento", "", ""}
+  v1 := common.Video{Owner:"rob", Name:"Novocento"}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
@@ -285,7 +285,7 @@ func TestInvalidIdRemove(t *testing.T) {
 
 func TestNotOwnerRemove(t *testing.T) {
 	dao := dao(t)
-	v1 := common.Video{"", "rob", "Novocento", "", ""}
+  v1 := common.Video{Owner:"rob", Name:"Novocento"}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
@@ -381,7 +381,7 @@ func TestVideoResource(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	dao := dao(t)
-	v1 := common.Video{"", "", "Novocento", "", ""}
+  v1 := common.Video{Name:"Novocento"}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
@@ -409,7 +409,7 @@ func TestInvalidIdDownload(t *testing.T) {
 
 func TestNotOwnerDownload(t *testing.T) {
 	dao := dao(t)
-	v1 := common.Video{"", "rob", "Novocento", "", ""}
+  v1 := common.Video{Owner:"rob", Name:"Novocento"}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)

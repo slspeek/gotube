@@ -8,11 +8,14 @@ import (
 	"github.com/slspeek/gotube/auth"
 	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
+	"github.com/slspeek/gotube/thumb"
 	"io"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 type VideoResource struct {
@@ -20,6 +23,7 @@ type VideoResource struct {
 	sess        *mgo.Session
 	videos      *mongo.Dao
 	auth        *auth.Auth
+	bs          *goblob.BlobService
 	flowService *flow.UploadHandler
 }
 
@@ -36,6 +40,7 @@ func (v *VideoResource) writeBackBlobId(r *http.Request, blobId string) {
 		log.Println("Could not update video : ", id)
 	}
 	log.Println("Updated video: ", id, " with BlobId: ", blobId)
+	v.generateThumbs(*vid, 5, 128)
 }
 
 func NewVideoResource(sess *mgo.Session, db string, collecion string, auth *auth.Auth) *VideoResource {
@@ -44,8 +49,8 @@ func NewVideoResource(sess *mgo.Session, db string, collecion string, auth *auth
 	v.db = db
 	v.auth = auth
 	v.videos = mongo.NewDao(sess.Copy(), db, collecion)
-	blobs := goblob.NewBlobService(sess.Copy(), db, "flowfs")
-	v.flowService = flow.NewUploadHandler(blobs, v.writeBackBlobId)
+	v.bs = goblob.NewBlobService(sess.Copy(), db, "flowfs")
+	v.flowService = flow.NewUploadHandler(v.bs, v.writeBackBlobId)
 	return v
 }
 
@@ -119,6 +124,11 @@ func (v VideoResource) Register(container *restful.Container) {
 		// docs
 		Doc("download a video").
 		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
+	ws2.Route(ws.GET("/{video-id}/thumbs/{thumb-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveThumb).
+		// docs
+		Doc("get a thumb from video").
+		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
+		Param(ws.PathParameter("thumb-id", "identifier of the video").DataType("integer")))
 
 	ws.Route(ws.POST("").To(v.createVideo).
 		// docs
@@ -247,6 +257,14 @@ func (v *VideoResource) removeVideo(request *restful.Request, response *restful.
 			response.WriteErrorString(http.StatusInternalServerError, err.Error())
 			return
 		}
+		for _, blobId := range video.Thumbs {
+			err := bs.Remove(blobId)
+			if err != nil {
+				response.AddHeader("Content-Type", "text/plain")
+				response.WriteErrorString(http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
 	}
 	id := request.PathParameter("video-id")
 	err := v.videos.Delete(id)
@@ -261,6 +279,35 @@ func (v *VideoResource) uploadVideo(request *restful.Request, response *restful.
 	v.flowService.ServeHTTP(response.ResponseWriter, request.Request)
 }
 
+func (v *VideoResource) serveThumb(request *restful.Request, response *restful.Response) {
+	video := request.Attribute("video-object").(*common.Video)
+	thumbIndex := request.PathParameter("thumb-id")
+	index, err := strconv.Atoi(thumbIndex)
+	if err != nil {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusBadRequest, "Thumb index could not be parsed")
+		return
+	}
+	if index >= len(video.Thumbs) {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusBadRequest, "Thumb index out of bounds")
+		return
+	}
+	var fid string
+	fid = video.Thumbs[index]
+	sess := v.sess.Copy()
+	bs := goblob.NewBlobService(sess, v.db, "flowfs")
+	defer bs.Close()
+	blobHandle, err := bs.Open(fid)
+	defer bs.Close()
+	if err != nil {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusInternalServerError, "Thumb could not be opened")
+		return
+	}
+
+	http.ServeContent(response.ResponseWriter, request.Request, "", blobHandle.UploadDate(), blobHandle)
+}
 func (v *VideoResource) serveVideo(request *restful.Request, response *restful.Response) {
 	video := request.Attribute("video-object").(*common.Video)
 	var fid string
@@ -295,19 +342,41 @@ func (v *VideoResource) downloadVideo(request *restful.Request, response *restfu
 	bs := goblob.NewBlobService(sess, v.db, "flowfs")
 	defer bs.Close()
 	blobHandle, err := bs.Open(fid)
-  defer blobHandle.Close()
+	defer blobHandle.Close()
 	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "Video could not be opened")
 		return
 	}
 
-  response.AddHeader("Content-Type", "application/octet-stream");
-  response.AddHeader("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, blobHandle.Name()))
+	response.AddHeader("Content-Type", "application/octet-stream")
+	response.AddHeader("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, blobHandle.Name()))
 	_, err = io.Copy(response.ResponseWriter, blobHandle)
 	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "Video could not be copied to the response")
 		return
 	}
+}
+
+func (v *VideoResource) generateThumbs(vid common.Video, count int, size int) (err error) {
+	outputChan, tempfn, err := thumb.CreateThumbs(v.bs, vid.BlobId, count, size)
+	if err != nil {
+		return
+	}
+	for i := 0; i < count; i++ {
+		result := <-outputChan
+		if result.Err != nil {
+			log.Printf("thumbnailing failed: %v", result.Err)
+			continue
+		}
+		vid.Thumbs = append(vid.Thumbs, result.BlobId)
+		err = v.videos.Update(vid.Id.Hex(), vid)
+		if err != nil {
+			log.Printf("Could not save thumbid in Video: %#v", err)
+		}
+	}
+  log.Printf("Before remove %s", tempfn)
+  err = os.Remove(tempfn)
+	return
 }
