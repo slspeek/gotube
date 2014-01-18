@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/slspeek/flowgo"
 	"github.com/slspeek/go-restful"
-	"github.com/slspeek/goblob"
 	"github.com/slspeek/gotube/auth"
 	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
@@ -32,14 +31,6 @@ func check(t *testing.T, err error) {
 	}
 }
 
-func blobService() (bs *goblob.BlobService) {
-	s, err := mgo.Dial("localhost")
-	if err != nil {
-		panic(err)
-	}
-	bs = goblob.NewBlobService(s, "test", "flowfs")
-	return
-}
 
 func makeRequest(url string, body io.Reader, f flow.Flow, chunkNumber int) *http.Request {
 	buf := new(bytes.Buffer)

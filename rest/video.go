@@ -247,23 +247,23 @@ func (v *VideoResource) updateVideo(request *restful.Request, response *restful.
 
 func (v *VideoResource) removeVideo(request *restful.Request, response *restful.Response) {
 	video := request.Attribute("video-object").(*common.Video)
+	sess := v.sess.Copy()
+	bs := goblob.NewBlobService(sess, v.db, "flowfs")
+	defer bs.Close()
 	if video.BlobId != "" {
-		sess := v.sess.Copy()
-		bs := goblob.NewBlobService(sess, v.db, "flowfs")
-		defer bs.Close()
 		err := bs.Remove(video.BlobId)
 		if err != nil {
 			response.AddHeader("Content-Type", "text/plain")
 			response.WriteErrorString(http.StatusInternalServerError, err.Error())
 			return
 		}
-		for _, blobId := range video.Thumbs {
-			err := bs.Remove(blobId)
-			if err != nil {
-				response.AddHeader("Content-Type", "text/plain")
-				response.WriteErrorString(http.StatusInternalServerError, err.Error())
-				return
-			}
+	}
+	for _, blobId := range video.Thumbs {
+		err := bs.Remove(blobId)
+		if err != nil {
+			response.AddHeader("Content-Type", "text/plain")
+			response.WriteErrorString(http.StatusInternalServerError, err.Error())
+			return
 		}
 	}
 	id := request.PathParameter("video-id")
@@ -376,7 +376,7 @@ func (v *VideoResource) generateThumbs(vid common.Video, count int, size int) (e
 			log.Printf("Could not save thumbid in Video: %#v", err)
 		}
 	}
-  log.Printf("Before remove %s", tempfn)
-  err = os.Remove(tempfn)
+	log.Printf("Before remove %s", tempfn)
+	err = os.Remove(tempfn)
 	return
 }

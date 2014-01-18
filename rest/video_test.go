@@ -7,11 +7,9 @@ import (
 	"github.com/slspeek/gotube/auth"
 	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
-	"io"
 	"labix.org/v2/mgo"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 )
@@ -22,12 +20,17 @@ var (
 	allwaysNobody = func(*http.Request) string { return "" }
 )
 
-func insertLittleBlob() (id string, err error) {
-	sess, err := mgo.Dial("localhost")
+func blobService() (bs *goblob.BlobService) {
+	s, err := mgo.Dial("localhost")
 	if err != nil {
-		return
+		panic(err)
 	}
-	bs := goblob.NewBlobService(sess, "test", "flowfs")
+	bs = goblob.NewBlobService(s, "test", "flowfs")
+	return
+}
+
+func insertLittleBlob() (id string, err error) {
+	bs := blobService()
 	file, err := bs.Create("foo")
 	if err != nil {
 		return
@@ -37,6 +40,7 @@ func insertLittleBlob() (id string, err error) {
 	id = file.StringId()
 	return
 }
+
 func dao(t *testing.T) *mongo.Dao {
 	sess, err := mgo.Dial("localhost")
 	if err != nil {
@@ -79,7 +83,6 @@ func TestVideoTag(t *testing.T) {
 		t.Log(tag)
 		t.Fatal("Wrong video tag")
 	}
-
 }
 
 // Test Matrix
@@ -94,9 +97,9 @@ func TestVideoTag(t *testing.T) {
 //   createVideo, findAllVideo serapately variing Not authorized
 //   createVideo with invalid data
 
-func TestNotAuthorizedCreate(t *testing.T) {
+//Generic test functions
+func verifyRequestWillNotAuthorize(req *http.Request, t *testing.T) {
 	container := loadedContainer(t, allwaysNobody)
-	req, _ := http.NewRequest("POST", "/api/videos", nil)
 	rw := httptest.NewRecorder()
 	container.ServeHTTP(rw, req)
 	if rw.Code != http.StatusUnauthorized {
@@ -104,14 +107,49 @@ func TestNotAuthorizedCreate(t *testing.T) {
 	}
 }
 
-func TestInvalidDataCreate(t *testing.T) {
-	container := loadedContainer(t, allwaysSteven)
-	req, _ := http.NewRequest("POST", "/api/videos", nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusInternalServerError {
-		t.Fatal("Should have been internalerror, but was: ", rw.Code)
+func getVideoIdOwnedByRob(t *testing.T) string {
+	dao := dao(t)
+	v1 := common.Video{Owner: "rob", Name: "Novocento"}
+	id, err := dao.Create(v1)
+	if err != nil {
+		t.Fatal(err)
 	}
+	return id
+}
+
+func verifyRequestGetsForbiddenForUserSteven(req *http.Request, t *testing.T) *httptest.ResponseRecorder{
+	return verifyRequestReturns(req, http.StatusForbidden, t);
+}
+
+func verifyRequestReturnsBadRequest(req *http.Request, t *testing.T) *httptest.ResponseRecorder{
+	return verifyRequestReturns(req, http.StatusBadRequest, t);
+}
+func verifyRequestReturnsInternalError(req *http.Request, t *testing.T) *httptest.ResponseRecorder {
+  return verifyRequestReturns(req, http.StatusInternalServerError, t)
+}
+func verifyRequestReturnsOK(req *http.Request, t *testing.T) *httptest.ResponseRecorder {
+	return verifyRequestReturns(req, http.StatusOK, t);
+}
+
+func verifyRequestReturns(req *http.Request, status int, t *testing.T) (rw *httptest.ResponseRecorder) {
+	container := loadedContainer(t, allwaysSteven)
+	rw = httptest.NewRecorder()
+	container.ServeHTTP(rw, req)
+	if rw.Code != status {
+    t.Fatal("Should have been: ", status, " but was: ", rw.Code)
+	}
+	return rw
+}
+
+//Create method tests
+func TestNotAuthorizedCreate(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/api/videos", nil)
+	verifyRequestWillNotAuthorize(req, t)
+}
+
+func TestInvalidDataCreate(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/api/videos", nil)
+	verifyRequestReturnsInternalError(req, t)
 }
 
 func TestSuccessCreate(t *testing.T) {
@@ -125,34 +163,22 @@ func TestSuccessCreate(t *testing.T) {
 	}
 }
 
+//Findall method tests
 func TestNotAuthorizedFindAll(t *testing.T) {
-	container := loadedContainer(t, allwaysNobody)
 	req, _ := http.NewRequest("GET", "/api/videos", nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusUnauthorized {
-		t.Fatal("Should have been unauthorized, but was: ", rw.Code)
-	}
+	verifyRequestWillNotAuthorize(req, t)
 }
 
 func TestSuccessFindAll(t *testing.T) {
 	createNovecento(t)
-	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("GET", "/api/videos", nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusOK {
-		t.Fatal("Should have been OK, but was: ", rw.Code)
-	}
+	verifyRequestReturnsOK(req, t)
 }
+
+//Playlist method tests
 func TestNotAuthorizedPlaylist(t *testing.T) {
-	container := loadedContainer(t, allwaysNobody)
 	req, _ := http.NewRequest("GET", "/api/videos/playlist", nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusUnauthorized {
-		t.Fatal("Should have been unauthorized, but was: ", rw.Code)
-	}
+	verifyRequestWillNotAuthorize(req, t)
 }
 
 func TestSuccessPlaylist(t *testing.T) {
@@ -170,156 +196,81 @@ func TestSuccessPlaylist(t *testing.T) {
 	}
 }
 
+//Find method tests
 func TestInvalidIdFind(t *testing.T) {
-	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("GET", "/api/videos/999", nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusBadRequest {
-		t.Fatal("Should have been StatusBadRequest, but was: ", rw.Code)
-	}
+	verifyRequestReturnsBadRequest(req, t)
 }
 
 func TestNotOwnerFind(t *testing.T) {
-	dao := dao(t)
-  v1 := common.Video{Owner:"rob", Name:"Novocento"}
-	id, err := dao.Create(v1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	container := loadedContainer(t, allwaysSteven)
+	id := getVideoIdOwnedByRob(t)
 	req, _ := http.NewRequest("GET", "/api/videos/"+id, nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusForbidden {
-		t.Fatal("Should have been StatusForbidden, but was: ", rw.Code)
-	}
+	verifyRequestGetsForbiddenForUserSteven(req, t)
 }
 
 func TestNotAuthorizedFind(t *testing.T) {
 	id := createNovecento(t)
-	container := loadedContainer(t, allwaysNobody)
 	req, _ := http.NewRequest("GET", "/api/videos/"+id, nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusUnauthorized {
-		t.Fatal("Should have been unauthorized, but was: ", rw.Code)
-	}
-
+	verifyRequestWillNotAuthorize(req, t)
 }
 
 func TestSuccessFind(t *testing.T) {
 	id := createNovecento(t)
-	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("GET", "/api/videos/"+id, nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusOK {
-		t.Fatal("Should have been Ok, but was: ", rw.Code)
-	}
+	verifyRequestReturnsOK(req, t)
 }
 
+//Update method tests
 func TestInvalidIdUpdate(t *testing.T) {
 	createNovecento(t)
-	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("PUT", "/api/videos/888", strings.NewReader(`{"Owner":"steven","Name":"As it is in heaven"}`))
 	req.Header["Content-Type"] = []string{"application/json"}
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusBadRequest {
-		t.Fatal("Should have been bad request, but was: ", rw.Code)
-	}
+	verifyRequestReturnsBadRequest(req, t)
 }
 
 func TestNotOwnerUpdate(t *testing.T) {
-	dao := dao(t)
-  v1 := common.Video{Owner:"rob", Name:"Novocento"}
-	id, err := dao.Create(v1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	container := loadedContainer(t, allwaysSteven)
+	id := getVideoIdOwnedByRob(t)
 	req, _ := http.NewRequest("PUT", "/api/videos/"+id, strings.NewReader(`{"Owner":"steven","Name":"As it is in heaven"}`))
 	req.Header["Content-Type"] = []string{"application/json"}
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusForbidden {
-		t.Fatal("Should have been StatusForbidden, but was: ", rw.Code)
-	}
+	verifyRequestGetsForbiddenForUserSteven(req, t)
 }
 
 func TestNotAuthorizedUpdate(t *testing.T) {
 	id := createNovecento(t)
-	container := loadedContainer(t, allwaysNobody)
 	req, _ := http.NewRequest("PUT", "/api/videos/"+id, nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusUnauthorized {
-		t.Fatal("Should have been unauthorized, but was: ", rw.Code)
-	}
+	verifyRequestWillNotAuthorize(req, t)
 }
 
 func TestSuccessUpdate(t *testing.T) {
 	id := createNovecento(t)
-	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("PUT", "/api/videos/"+id, strings.NewReader(`{"Owner":"steven","Name":"As it is in heaven"}`))
 	req.Header["Content-Type"] = []string{"application/json"}
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusOK {
-		t.Fatal("Should have been OK, but was: ", rw.Code)
-	}
+	verifyRequestReturnsOK(req, t)
 }
 
+//Remove methods tests
 func TestInvalidIdRemove(t *testing.T) {
 	createNovecento(t)
-	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("DELETE", "/api/videos/888", nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusBadRequest {
-		t.Fatal("Should have been bad request, but was: ", rw.Code)
-	}
-
+	verifyRequestReturnsBadRequest(req, t)
 }
 
 func TestNotOwnerRemove(t *testing.T) {
-	dao := dao(t)
-  v1 := common.Video{Owner:"rob", Name:"Novocento"}
-	id, err := dao.Create(v1)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	container := loadedContainer(t, allwaysSteven)
+	id := getVideoIdOwnedByRob(t)
 	req, _ := http.NewRequest("DELETE", "/api/videos/"+id, nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusForbidden {
-		t.Fatal("Should have been forbidden, but was: ", rw.Code)
-	}
+	verifyRequestGetsForbiddenForUserSteven(req, t)
 }
 
 func TestNotAuthorizedRemove(t *testing.T) {
 	id := createNovecento(t)
-	container := loadedContainer(t, allwaysNobody)
 	req, _ := http.NewRequest("DELETE", "/api/videos/"+id, nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusUnauthorized {
-		t.Fatal("Should have been unauthorized, but was: ", rw.Code)
-	}
+	verifyRequestWillNotAuthorize(req, t)
 }
 
 func TestSuccessRemoveWithoutBlob(t *testing.T) {
 	id := createNovecento(t)
-	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("DELETE", "/api/videos/"+id, nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusOK {
-		t.Fatal("Should have been ok, but was: ", rw.Code)
-	}
+	verifyRequestReturnsOK(req, t)
 	dao := dao(t)
 	err := dao.Get(id, new(common.Video))
 	if err == nil {
@@ -344,95 +295,66 @@ func TestSuccessRemoveWithBlob(t *testing.T) {
 	if err != nil {
 		t.Fatal("Could not save video")
 	}
-	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("DELETE", "/api/videos/"+id, nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusOK {
-		t.Fatal("Should have been ok, but was: ", rw.Code)
-	}
+	verifyRequestReturnsOK(req, t)
 	err = dao.Get(id, new(common.Video))
 	if err == nil {
 		t.Fatal("Should have been removed")
 	}
-
-	sess, err := mgo.Dial("localhost")
-	if err != nil {
-		return
-	}
-	bs := goblob.NewBlobService(sess, "test", "flowfs")
+	bs := blobService()
 	_, err = bs.Open(blobid)
 	if err == nil {
 		t.Fatal("Blob Should have been removed")
 	}
 }
 
-func TestVideoResource(t *testing.T) {
-	ts := videoTestServer(t)
-	defer ts.Close()
-
-	resp, _ := http.Post(ts.URL+"/api/videos", "application/json", strings.NewReader(`{"Owner":"","Name":"As it is in heaven"}`))
-	io.Copy(os.Stderr, resp.Body)
-
-	if resp.StatusCode != http.StatusForbidden {
-		t.Fatal("StatusCode: ", resp.StatusCode)
-	}
-}
-
-func TestGet(t *testing.T) {
+func TestSuccessRemoveWithThumb(t *testing.T) {
 	dao := dao(t)
-  v1 := common.Video{Name:"Novocento"}
-	id, err := dao.Create(v1)
+	id := createNovecento(t)
+	blobid, err := insertLittleBlob()
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal("Could not create little file")
 	}
-	ts := videoTestServer(t)
-	defer ts.Close()
-	url := ts.URL + "/api/videos/" + id
-	resp, err := http.Get(url)
-	io.Copy(os.Stderr, resp.Body)
+	vid := new(common.Video)
+	err = dao.Get(id, vid)
+	if err != nil {
+		t.Fatal("Could not reload Video")
+	}
+	vid.Thumbs = []string{blobid}
+	err = dao.Update(id, vid)
+	if err != nil {
+		t.Fatal("Could not save video")
+	}
+	req, _ := http.NewRequest("DELETE", "/api/videos/"+id, nil)
+	verifyRequestReturnsOK(req, t)
+	err = dao.Get(id, new(common.Video))
+	if err == nil {
+		t.Fatal("Should have been removed")
+	}
 
-	if resp.StatusCode != http.StatusForbidden {
-		t.Fatal("StatusCode: ", resp.StatusCode)
+	bs := blobService()
+	_, err = bs.Open(blobid)
+	if err == nil {
+		t.Fatal("Thumb Should have been removed")
 	}
 }
 
+//Download method tests
 func TestInvalidIdDownload(t *testing.T) {
-	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("GET", "/content/videos/999/download", nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusBadRequest {
-		t.Fatal("Should have been StatusBadRequest, but was: ", rw.Code)
-	}
+	verifyRequestReturnsBadRequest(req, t)
 }
 
 func TestNotOwnerDownload(t *testing.T) {
-	dao := dao(t)
-  v1 := common.Video{Owner:"rob", Name:"Novocento"}
-	id, err := dao.Create(v1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	container := loadedContainer(t, allwaysSteven)
+	id := getVideoIdOwnedByRob(t)
 	req, _ := http.NewRequest("GET", "/content/videos/"+id+"/download", nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusForbidden {
-		t.Fatal("Should have been StatusForbidden, but was: ", rw.Code)
-	}
+	verifyRequestGetsForbiddenForUserSteven(req, t)
 }
 
 func TestNotAuthorizedDownload(t *testing.T) {
 	id := createNovecento(t)
-	container := loadedContainer(t, allwaysNobody)
 	req, _ := http.NewRequest("GET", "/content/videos/"+id+"/download", nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusUnauthorized {
-		t.Fatal("Should have been unauthorized, but was: ", rw.Code)
-	}
-
+	verifyRequestWillNotAuthorize(req, t)
 }
 
 func TestSuccessDownload(t *testing.T) {
@@ -452,13 +374,8 @@ func TestSuccessDownload(t *testing.T) {
 	if err != nil {
 		t.Fatal("Could not save video")
 	}
-	container := loadedContainer(t, allwaysSteven)
 	req, _ := http.NewRequest("GET", "/content/videos/"+id+"/download", nil)
-	rw := httptest.NewRecorder()
-	container.ServeHTTP(rw, req)
-	if rw.Code != http.StatusOK {
-		t.Fatal("Should have been Ok, but was: ", rw.Code)
-	}
+	rw := verifyRequestReturnsOK(req, t)
 	contentType := rw.Header().Get("Content-Type")
 	if contentType != "application/octet-stream" {
 		t.Fatal("Expected octet-stream, got: ", contentType)
@@ -468,5 +385,4 @@ func TestSuccessDownload(t *testing.T) {
 	if disposition != `attachment; filename="foo"` {
 		t.Fatal("Expected attachment got: ", disposition)
 	}
-
 }
