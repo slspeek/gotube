@@ -14,7 +14,6 @@ import (
 	"labix.org/v2/mgo/bson"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 )
 
@@ -360,23 +359,25 @@ func (v *VideoResource) downloadVideo(request *restful.Request, response *restfu
 }
 
 func (v *VideoResource) generateThumbs(vid common.Video, count int, size int) (err error) {
-	outputChan, tempfn, err := thumb.CreateThumbs(v.bs, vid.BlobId, count, size)
+	outputChan, err := thumb.CreateThumbs(v.bs, vid.BlobId, count, size)
 	if err != nil {
 		return
 	}
+	allThumbs := make(map[int]thumb.ThumbResult)
 	for i := 0; i < count; i++ {
 		result := <-outputChan
-		if result.Err != nil {
-			log.Printf("thumbnailing failed: %v", result.Err)
+		allThumbs[result.Index] = result
+	}
+	for i := 0; i < count; i++ {
+		if err = allThumbs[i].Err; err != nil {
+			log.Printf("thumbnailing failed: %v", err)
 			continue
 		}
-		vid.Thumbs = append(vid.Thumbs, result.BlobId)
-		err = v.videos.Update(vid.Id.Hex(), vid)
-		if err != nil {
-			log.Printf("Could not save thumbid in Video: %#v", err)
-		}
+		vid.Thumbs = append(vid.Thumbs, allThumbs[i].BlobId)
 	}
-	log.Printf("Before remove %s", tempfn)
-	err = os.Remove(tempfn)
+	err = v.videos.Update(vid.Id.Hex(), vid)
+	if err != nil {
+		log.Printf("Could not save thumbids in Video: %#v", err)
+	}
 	return
 }

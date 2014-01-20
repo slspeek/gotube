@@ -27,6 +27,8 @@ func check(err error) {
 var noSsl = flag.Bool("no-ssl", false, "run without SSL")
 var dbName = flag.String("db", "gotube", "name of the mongodb to use")
 var pwFile = flag.String("pw", "htpasswd", "path of the html password file")
+var webclientDir = flag.String("www", "src/github.com/slspeek/gotube/web/app", "path of the web client")
+var port = flag.Int("port", 8080, "webserver port")
 
 func main() {
 	flag.Parse()
@@ -54,10 +56,11 @@ func main() {
 
 	r.PathPrefix("/api/videos").Handler(container)
 	r.PathPrefix("/content/videos").Handler(container)
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir(flag.Arg(0))))
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir(*webclientDir)))
+  listenAddress := fmt.Sprintf(":%d", *port)
 	if !*noSsl {
-		log.Fatal(http.ListenAndServeTLS(":8080", "cert.pem", "key.pem", r))
+		log.Fatal(http.ListenAndServeTLS(listenAddress, "cert.pem", "key.pem", r))
 	} else {
-		log.Fatal(http.ListenAndServe(":8080", r))
+		log.Fatal(http.ListenAndServe(listenAddress, r))
 	}
 }

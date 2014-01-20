@@ -5,47 +5,62 @@ import (
 	"github.com/slspeek/goblob"
 	"github.com/slspeek/goffthumb"
 	"io/ioutil"
+	"log"
 	"os"
+	"sync"
 )
 
 type ThumbResult struct {
 	BlobId string
+	Index  int
 	Err    error
 }
 
-func CreateThumbs(bs *goblob.BlobService, inputf string, count int, size int) (target chan ThumbResult, tempfn string, err error) {
+func timePercentage(count int, index int) (label string) {
+	base := (100 / (2 * count))
+	value := base + index*(100/count)
+	rounded := int(value)
+	label = fmt.Sprintf("%d%%", rounded)
+	log.Println("return: ", label)
+	return
+}
+
+func CreateThumbs(bs *goblob.BlobService, inputf string, count int, size int) (target chan ThumbResult, err error) {
 	target = make(chan ThumbResult, count)
+	limit := make(chan int, 2)
+	var wg sync.WaitGroup
 	inputdfn, err := tempFileName()
-  if err != nil {
-    return
-  }
-  tempfn = inputdfn
-	inputfh, err := bs.Open(inputf)
 	if err != nil {
 		return
 	}
-	err = goblob.WriteFile(inputdfn, inputfh)
+	err = bs.WriteOutFile(inputf, inputdfn)
 	if err != nil {
 		return
 	}
-	for time := 100 / (2 * count); time <= 100; time += 100 / count {
-		out := int(time)
-		go func() {
-			blobId, err := createThumbImpl(bs, inputdfn, fmt.Sprintf("%v%%", out), size)
-			target <- ThumbResult{BlobId: blobId, Err: err}
-		}()
+	for i := 0; i < count; i++ {
+		wg.Add(1)
+		go func(i int) {
+			limit <- 1
+			blobId, err := createThumbImpl(bs, inputdfn, timePercentage(count, i), size)
+			target <- ThumbResult{BlobId: blobId, Index: i, Err: err}
+			<-limit
+			wg.Done()
+		}(i)
 	}
-  
+	go func() {
+		wg.Wait()
+    os.Remove(inputdfn)
+	}()
 	return
 }
 
 func createThumbImpl(bs *goblob.BlobService, inputdfn string, time string, size int) (blobId string, err error) {
 	thumbfn, err := tempFileName()
-  if err != nil {
-    return
-  }
-  thumbfn += ".png"
-	err = ffmpeg.CreateThumb(inputdfn, thumbfn , time, size)
+	if err != nil {
+		return
+	}
+	thumbfn += ".png"
+	err = ffmpeg.CreateThumb(inputdfn, thumbfn, time, size)
 	if err != nil {
 		return
 	}
@@ -64,10 +79,10 @@ func tempFileName() (path string, err error) {
 		return
 	}
 	path = f.Name()
-  err = f.Close()
-  if err != nil {
-    return
-  }
-  os.Remove(path)
+	err = f.Close()
+	if err != nil {
+		return
+	}
+	os.Remove(path)
 	return
 }
