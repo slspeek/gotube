@@ -34,8 +34,8 @@ func (self *Dao) GetAll(result interface{}) (err error) {
 	return
 }
 
-func (self *Dao) Find(constraint bson.M, result interface{}) (err error) {
-	err = self.collection().Find(constraint).All(result)
+func (self *Dao) Find(constraint bson.M, result interface{}, sortFields []string) (err error) {
+	err = self.collection().Find(constraint).Sort(sortFields...).All(result)
 	return
 }
 

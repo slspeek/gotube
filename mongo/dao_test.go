@@ -125,7 +125,7 @@ func TestFind(t *testing.T) {
 		t.Fatal(err)
 	}
 	reloaded := make([]Video, 1)
-	err = dao.Find(bson.M{"owner": "steven"}, &reloaded)
+	err = dao.Find(bson.M{"owner": "steven"}, &reloaded, []string{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,6 +134,36 @@ func TestFind(t *testing.T) {
 		t.Fatal("Expected 1 got ", len(reloaded))
 	}
 	if reloaded[0].Name != "Novecento II" {
+		t.Fatal("Expected Novecento")
+	}
+	if reloaded[0].Id.Hex() != id {
+		t.Fatal("Expected ", id, " but was ", reloaded[0].Id)
+	}
+	dao.DeleteAll()
+}
+func TestFindOrder(t *testing.T) {
+	dao := dao(t)
+	dao.DeleteAll()
+	v1 := Video{"", "steven", "Novecento II", "", ""}
+	_, err := dao.Create(v1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v2 := Video{"", "mike", "Novecento III", "", ""}
+  id, err := dao.Create(v2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reloaded := make([]Video, 2)
+	err = dao.Find(bson.M{}, &reloaded, []string{"owner"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(reloaded) != 2 {
+		t.Fatal("Expected 2 got ", len(reloaded))
+	}
+	if reloaded[0].Name != "Novecento III" {
 		t.Fatal("Expected Novecento")
 	}
 	if reloaded[0].Id.Hex() != id {

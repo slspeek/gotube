@@ -5,7 +5,6 @@ import (
 	"github.com/slspeek/goblob"
 	"github.com/slspeek/goffthumb"
 	"io/ioutil"
-	"log"
 	"os"
 	"sync"
 )
@@ -21,7 +20,6 @@ func timePercentage(count int, index int) (label string) {
 	value := base + index*(100/count)
 	rounded := int(value)
 	label = fmt.Sprintf("%d%%", rounded)
-	log.Println("return: ", label)
 	return
 }
 

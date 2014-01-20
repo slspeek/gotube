@@ -15,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type VideoResource struct {
@@ -163,7 +164,7 @@ func (v VideoResource) findVideo(request *restful.Request, response *restful.Res
 func (v VideoResource) findAllVideos(request *restful.Request, response *restful.Response) {
 	user := request.Attribute("username")
 	vid := make([]common.Video, 10)
-	err := v.videos.Find(bson.M{"owner": user}, &vid)
+	err := v.videos.Find(bson.M{"owner": user}, &vid,[]string{"-created"} )
 	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "Error retrieving videos")
@@ -175,7 +176,7 @@ func (v VideoResource) findAllVideos(request *restful.Request, response *restful
 func (v VideoResource) playlist(request *restful.Request, response *restful.Response) {
 	user := request.Attribute("username")
 	vid := make([]common.Video, 10)
-	err := v.videos.Find(bson.M{"owner": user}, &vid)
+	err := v.videos.Find(bson.M{"owner": user}, &vid, []string{"Created-"})
 	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "Error retrieving videos")
@@ -199,6 +200,7 @@ func (v *VideoResource) createVideo(request *restful.Request, response *restful.
 	user := request.Attribute("username")
 	if err == nil {
 		if user == vid.Owner {
+      vid.Created = time.Now()
 			id, err := v.videos.Create(vid)
 			if err != nil {
 				response.AddHeader("Content-Type", "text/plain")
