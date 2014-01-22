@@ -3,7 +3,7 @@ describe('Gotube proof of concept scenario', function() {
   'use strict';
 
   beforeEach(function() {
-    browser.get('/');
+    browser.get('/#/list');
   });
 
   var login = function() {
@@ -17,7 +17,7 @@ describe('Gotube proof of concept scenario', function() {
 
 
   it(
-    'should automatically redirect to login', function() {
+    'should upload a video and view it', function() {
       login();
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.id('upload')).click();
@@ -25,13 +25,13 @@ describe('Gotube proof of concept scenario', function() {
       element(by.id('desc')).sendKeys('Cartoon');
       element(by.id('flow-btn-input-id')).sendKeys(browser.params.testMovie);
       //browser.sleep(3000);
-      browser.get('/');
+      browser.get('/#/list');
       //login();
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.linkText('Better life')).click();
       expect(element(by.binding('{{video.Name}}')).getText()).toBe('Better life');
       expect(element(by.binding('{{video.Desc}}')).getText()).toBe('Cartoon');
-      browser.get('/');
+      browser.get('/#/list');
       //login();
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.className('glyphicon-remove')).click();
