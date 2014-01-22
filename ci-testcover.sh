@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 PACKAGE=github.com/slspeek/$1
 SHORTNAME=$(basename $PACKAGE)
 outfile=test-temp.txt
