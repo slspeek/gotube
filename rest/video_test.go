@@ -7,6 +7,7 @@ import (
 	"github.com/slspeek/gotube/auth"
 	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
+	"io/ioutil"
 	"labix.org/v2/mgo"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,7 @@ import (
 
 var (
 	NOVECENTO     = common.Video{Owner: "steven", Name: "Novecento", Desc: "Italian classic"}
+  PUBLIC_FICTION     = common.Video{Owner: "steven", Public: true, Name: "Public Fiction", Desc: "Unreal classic"}
 	allwaysSteven = func(*http.Request) string { return "steven" }
 	allwaysNobody = func(*http.Request) string { return "" }
 )
@@ -52,6 +54,14 @@ func dao(t *testing.T) *mongo.Dao {
 func createNovecento(t *testing.T) (id string) {
 	dao := dao(t)
 	id, err := dao.Create(NOVECENTO)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return
+}
+func createPublicFiction(t *testing.T) (id string) {
+	dao := dao(t)
+	id, err := dao.Create(PUBLIC_FICTION)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -385,4 +395,44 @@ func TestSuccessDownload(t *testing.T) {
 	if disposition != `attachment; filename="foo"` {
 		t.Fatal("Expected attachment got: ", disposition)
 	}
+}
+
+func TestPublicFindAll(t *testing.T) {
+  createNovecento(t) 
+	req, _ := http.NewRequest("GET", "/public/videos", nil)
+	rw := verifyRequestReturnsOK(req, t)
+
+  b, err := ioutil.ReadAll(rw.Body)
+  if err != nil {
+    t.Fatal(err)
+  }
+  
+
+  if string(b) != "[]" {
+    t.Fatal()
+  }
+
+
+  createPublicFiction(t)
+
+	req, _ = http.NewRequest("GET", "/public/videos", nil)
+	rw = verifyRequestReturnsOK(req, t)
+  b, err = ioutil.ReadAll(rw.Body)
+  if err != nil {
+    t.Fatal(err)
+  }
+  
+
+  output := string(b)
+  if ! strings.Contains(output, "Public Fiction") {
+    t.Fatal(output)
+  }
+
+  if strings.Contains(output, "Novecento") {
+    t.Fatal(output)
+  }
+
+  
+
+
 }

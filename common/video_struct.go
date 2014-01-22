@@ -9,5 +9,6 @@ type Video struct {
   Id bson.ObjectId `_id,omitempty`
   Created time.Time
 	Owner, Name, Desc, BlobId string
+  Public bool
   Thumbs  []string
 }

@@ -89,71 +89,81 @@ func (v VideoResource) IsOwnerFilter(param string) restful.FilterFunction {
 func (v VideoResource) Register(container *restful.Container) {
 	videoIdFilter := ObjectIdFilter("video-id")
 	ownerFilter := v.IsOwnerFilter("video-id")
-	ws := new(restful.WebService)
-	ws2 := new(restful.WebService)
-	ws2.
+	apiWs := new(restful.WebService)
+	contentWs := new(restful.WebService)
+	publicWs := new(restful.WebService)
+
+	publicWs.Path("/public/videos").Produces(restful.MIME_JSON, restful.MIME_XML)
+
+	contentWs.
 		Path("/content/videos") /*.Produces("application/octet-stream")*/
-	ws.
+	apiWs.
 		Path("/api/videos").
 		Consumes(restful.MIME_XML, restful.MIME_JSON, "multipart/form-data").
 		//Consumes(restful.MIME_XML, restful.MIME_JSON).
 		Produces(restful.MIME_JSON, restful.MIME_XML)
 
-	ws.Route(ws.GET("").To(v.findAllVideos).
+	apiWs.Route(apiWs.GET("").To(v.findAllVideos).
 		// docs
 		Doc("get all your videos").
 		Writes(common.Video{})) // on the response
 
-	ws.Route(ws.GET("/playlist").To(v.playlist).
+	publicWs.Route(publicWs.GET("").To(v.findPublicVideos).
+		// docs
+		Doc("get all public videos").
+		Writes(common.Video{})) // on the response
+
+	apiWs.Route(apiWs.GET("/playlist").To(v.playlist).
 		// docs
 		Doc("get a playlist for all your videos").
 		Writes(common.Video{})) // on the response
 
-	ws.Route(ws.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.findVideo).
+	apiWs.Route(apiWs.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.findVideo).
 		// docs
 		Doc("get a video").
-		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
+		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")).
 		Writes(common.Video{})) // on the response
 
-	ws2.Route(ws.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveVideo).
+	contentWs.Route(apiWs.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveVideo).
 		// docs
 		Doc("stream a video").
-		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
+		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")))
 
-	ws2.Route(ws.GET("/{video-id}/download").Filter(videoIdFilter).Filter(ownerFilter).To(v.downloadVideo).
+	contentWs.Route(apiWs.GET("/{video-id}/download").Filter(videoIdFilter).Filter(ownerFilter).To(v.downloadVideo).
 		// docs
 		Doc("download a video").
-		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
-	ws2.Route(ws.GET("/{video-id}/thumbs/{thumb-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveThumb).
+		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")))
+	contentWs.Route(apiWs.GET("/{video-id}/thumbs/{thumb-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveThumb).
 		// docs
 		Doc("get a thumb from video").
-		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
-		Param(ws.PathParameter("thumb-id", "identifier of the video").DataType("integer")))
+		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")).
+		Param(apiWs.PathParameter("thumb-id", "identifier of the video").DataType("integer")))
 
-	ws.Route(ws.POST("").To(v.createVideo).
+	apiWs.Route(apiWs.POST("").To(v.createVideo).
 		// docs
 		Doc("create a video").
 		Reads(common.Video{})) // from the request
 
-	ws.Route(ws.POST("/{video-id}/upload").To(v.uploadVideo).Doc("upload video content"))
-	ws.Route(ws.GET("/{video-id}/upload").To(v.uploadVideo).Doc("check if we already have video content"))
+	apiWs.Route(apiWs.POST("/{video-id}/upload").To(v.uploadVideo).Doc("upload video content"))
+	apiWs.Route(apiWs.GET("/{video-id}/upload").To(v.uploadVideo).Doc("check if we already have video content"))
 
-	ws.Route(ws.PUT("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.updateVideo).
+	apiWs.Route(apiWs.PUT("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.updateVideo).
 		// docs
 		Doc("update a video").
-		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")).
+		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")).
 		Reads(common.Video{})) // from the request
 
-	ws.Route(ws.DELETE("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.removeVideo).
+	apiWs.Route(apiWs.DELETE("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.removeVideo).
 		// docs
 		Doc("delete a video").
-		Param(ws.PathParameter("video-id", "identifier of the video").DataType("string")))
+		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")))
 
-	ws.Filter(v.auth.Filter)
-	ws2.Filter(v.auth.Filter)
+	apiWs.Filter(v.auth.Filter)
+	contentWs.Filter(v.auth.Filter)
 
-	container.Add(ws)
-	container.Add(ws2)
+	container.Add(apiWs)
+	container.Add(contentWs)
+  container.Add(publicWs)
 }
 
 func (v VideoResource) findVideo(request *restful.Request, response *restful.Response) {
@@ -164,7 +174,18 @@ func (v VideoResource) findVideo(request *restful.Request, response *restful.Res
 func (v VideoResource) findAllVideos(request *restful.Request, response *restful.Response) {
 	user := request.Attribute("username")
 	vid := make([]common.Video, 10)
-	err := v.videos.Find(bson.M{"owner": user}, &vid,[]string{"-created"} )
+	err := v.videos.Find(bson.M{"owner": user}, &vid, []string{"-created"})
+	if err != nil {
+		response.AddHeader("Content-Type", "text/plain")
+		response.WriteErrorString(http.StatusInternalServerError, "Error retrieving videos")
+	} else {
+		response.WriteEntity(vid)
+	}
+}
+
+func (v VideoResource) findPublicVideos(request *restful.Request, response *restful.Response) {
+	vid := make([]common.Video, 10)
+	err := v.videos.Find(bson.M{"public": true}, &vid, []string{"-created"})
 	if err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "Error retrieving videos")
@@ -200,7 +221,7 @@ func (v *VideoResource) createVideo(request *restful.Request, response *restful.
 	user := request.Attribute("username")
 	if err == nil {
 		if user == vid.Owner {
-      vid.Created = time.Now()
+			vid.Created = time.Now()
 			id, err := v.videos.Create(vid)
 			if err != nil {
 				response.AddHeader("Content-Type", "text/plain")
