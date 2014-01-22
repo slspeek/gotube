@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	NOVECENTO     = common.Video{Owner: "steven", Name: "Novecento", Desc: "Italian classic"}
-  PUBLIC_FICTION     = common.Video{Owner: "steven", Public: true, Name: "Public Fiction", Desc: "Unreal classic"}
-	allwaysSteven = func(*http.Request) string { return "steven" }
-	allwaysNobody = func(*http.Request) string { return "" }
+	NOVECENTO      = common.Video{Owner: "steven", Name: "Novecento", Desc: "Italian classic"}
+	PUBLIC_FICTION = common.Video{Owner: "steven", Public: true, Name: "Public Fiction", Desc: "Unreal classic"}
+	allwaysSteven  = func(*http.Request) string { return "steven" }
+	allwaysNobody  = func(*http.Request) string { return "" }
 )
 
 func blobService() (bs *goblob.BlobService) {
@@ -127,18 +127,18 @@ func getVideoIdOwnedByRob(t *testing.T) string {
 	return id
 }
 
-func verifyRequestGetsForbiddenForUserSteven(req *http.Request, t *testing.T) *httptest.ResponseRecorder{
-	return verifyRequestReturns(req, http.StatusForbidden, t);
+func verifyRequestGetsForbiddenForUserSteven(req *http.Request, t *testing.T) *httptest.ResponseRecorder {
+	return verifyRequestReturns(req, http.StatusForbidden, t)
 }
 
-func verifyRequestReturnsBadRequest(req *http.Request, t *testing.T) *httptest.ResponseRecorder{
-	return verifyRequestReturns(req, http.StatusBadRequest, t);
+func verifyRequestReturnsBadRequest(req *http.Request, t *testing.T) *httptest.ResponseRecorder {
+	return verifyRequestReturns(req, http.StatusBadRequest, t)
 }
 func verifyRequestReturnsInternalError(req *http.Request, t *testing.T) *httptest.ResponseRecorder {
-  return verifyRequestReturns(req, http.StatusInternalServerError, t)
+	return verifyRequestReturns(req, http.StatusInternalServerError, t)
 }
 func verifyRequestReturnsOK(req *http.Request, t *testing.T) *httptest.ResponseRecorder {
-	return verifyRequestReturns(req, http.StatusOK, t);
+	return verifyRequestReturns(req, http.StatusOK, t)
 }
 
 func verifyRequestReturns(req *http.Request, status int, t *testing.T) (rw *httptest.ResponseRecorder) {
@@ -146,7 +146,7 @@ func verifyRequestReturns(req *http.Request, status int, t *testing.T) (rw *http
 	rw = httptest.NewRecorder()
 	container.ServeHTTP(rw, req)
 	if rw.Code != status {
-    t.Fatal("Should have been: ", status, " but was: ", rw.Code)
+		t.Fatal("Should have been: ", status, " but was: ", rw.Code)
 	}
 	return rw
 }
@@ -398,41 +398,30 @@ func TestSuccessDownload(t *testing.T) {
 }
 
 func TestPublicFindAll(t *testing.T) {
-  createNovecento(t) 
-	req, _ := http.NewRequest("GET", "/public/videos", nil)
+	createNovecento(t)
+	req, _ := http.NewRequest("GET", "/public/api/videos", nil)
 	rw := verifyRequestReturnsOK(req, t)
 
-  b, err := ioutil.ReadAll(rw.Body)
-  if err != nil {
-    t.Fatal(err)
-  }
-  
+	b, err := ioutil.ReadAll(rw.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(b) != "[]" {
+		t.Fatal()
+	}
 
-  if string(b) != "[]" {
-    t.Fatal()
-  }
-
-
-  createPublicFiction(t)
-
-	req, _ = http.NewRequest("GET", "/public/videos", nil)
+	createPublicFiction(t)
+	req, _ = http.NewRequest("GET", "/public/api/videos", nil)
 	rw = verifyRequestReturnsOK(req, t)
-  b, err = ioutil.ReadAll(rw.Body)
-  if err != nil {
-    t.Fatal(err)
-  }
-  
-
-  output := string(b)
-  if ! strings.Contains(output, "Public Fiction") {
-    t.Fatal(output)
-  }
-
-  if strings.Contains(output, "Novecento") {
-    t.Fatal(output)
-  }
-
-  
-
-
+	b, err = ioutil.ReadAll(rw.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	output := string(b)
+	if !strings.Contains(output, "Public Fiction") {
+		t.Fatal(output)
+	}
+	if strings.Contains(output, "Novecento") {
+		t.Fatal(output)
+	}
 }

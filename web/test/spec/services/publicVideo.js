@@ -1,6 +1,7 @@
+
 'use strict';
 
-describe('Service: Videoloader', function() {
+describe('Service: publicVideo', function() {
 
   var pinokio = {
     Id: 1,
@@ -26,13 +27,13 @@ describe('Service: Videoloader', function() {
   }));
 
   var Loader, $httpBackend;
-  beforeEach(inject(function(videoLoader) {
-    Loader = videoLoader;
+  beforeEach(inject(function(publicVideo) {
+    Loader = publicVideo;
   }));
 
   beforeEach(inject(function($injector) {
     $httpBackend = $injector.get('$httpBackend');
-    $httpBackend.when('GET', '/api/videos/1').respond(pinokio);
+    $httpBackend.when('GET', '/public/api/videos/1').respond(pinokio);
   }));
 
   afterEach(function() {

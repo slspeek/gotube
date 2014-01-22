@@ -55,6 +55,8 @@ func main() {
 	r.HandleFunc("/auth", authenticator.AuthService)
 
 	r.PathPrefix("/api/videos").Handler(container)
+	r.PathPrefix("/public/api/videos").Handler(container)
+	r.PathPrefix("/public/content/videos").Handler(container)
 	r.PathPrefix("/content/videos").Handler(container)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(*webclientDir)))
   listenAddress := fmt.Sprintf(":%d", *port)

@@ -59,6 +59,15 @@
           }
         }
       })
+      .when('/public', {
+        templateUrl: 'views/public.html',
+        controller: 'PublicListCtrl',
+        resolve: {
+          VideoList: function(publicLoader) {
+            return publicLoader();
+          }
+        }
+      })
       .when('/list', {
         templateUrl: 'views/list.html',
         controller: 'ListCtrl',
@@ -81,8 +90,18 @@
           }
         }
       })
+      .when('/publicView/:VideoId', {
+        templateUrl: 'views/view.html',
+        controller: 'PublicviewCtrl',
+        resolve: {
+          Video: function(publicVideo) {
+            return publicVideo();
+          }
+        }
+
+      })
       .otherwise({
-        redirectTo: '/list'
+        redirectTo: '/public'
       });
   }).config(function(flowFactoryProvider) {
     flowFactoryProvider.defaults = {

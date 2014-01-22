@@ -86,15 +86,39 @@ func (v VideoResource) IsOwnerFilter(param string) restful.FilterFunction {
 	}
 }
 
+func (v VideoResource) IsPublicFilter(param string) restful.FilterFunction {
+	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+		id := req.PathParameter(param)
+		vid := new(common.Video)
+		err := v.videos.Get(id, &vid)
+		if err != nil {
+			resp.AddHeader("Content-Type", "text/plain")
+			resp.WriteErrorString(http.StatusNotFound, "Video could not be found.")
+			return
+		}
+		if ! vid.Public {
+			resp.AddHeader("Content-Type", "text/plain")
+			resp.WriteErrorString(http.StatusForbidden, "Not public")
+			return
+		}
+		req.SetAttribute("video-object", vid)
+		chain.ProcessFilter(req, resp)
+	}
+}
+
 func (v VideoResource) Register(container *restful.Container) {
 	videoIdFilter := ObjectIdFilter("video-id")
 	ownerFilter := v.IsOwnerFilter("video-id")
+	publicFilter := v.IsPublicFilter("video-id")
 	apiWs := new(restful.WebService)
 	contentWs := new(restful.WebService)
 	publicWs := new(restful.WebService)
+	publicContentWs := new(restful.WebService)
 
-	publicWs.Path("/public/videos").Produces(restful.MIME_JSON, restful.MIME_XML)
+	publicWs.Path("/public/api/videos").Produces(restful.MIME_JSON, restful.MIME_XML)
 
+  publicContentWs. 
+		Path("/public/content/videos") /*.Produces("application/octet-stream")*/
 	contentWs.
 		Path("/content/videos") /*.Produces("application/octet-stream")*/
 	apiWs.
@@ -124,20 +148,40 @@ func (v VideoResource) Register(container *restful.Container) {
 		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")).
 		Writes(common.Video{})) // on the response
 
-	contentWs.Route(apiWs.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveVideo).
+	publicWs.Route(publicWs.GET("/{video-id}").Filter(videoIdFilter).Filter(publicFilter).To(v.findVideo).
+		// docs
+		Doc("get a public video").
+		Param(publicWs.PathParameter("video-id", "identifier of the video").DataType("string")).
+		Writes(common.Video{})) // on the response
+
+	publicContentWs.Route(publicContentWs.GET("/{video-id}/thumbs/{thumb-id}").Filter(videoIdFilter).Filter(publicFilter).To(v.serveThumb).
+		// docs
+		Doc("get a thumb from video").
+		Param(publicContentWs.PathParameter("video-id", "identifier of the video").DataType("string")).
+		Param(publicContentWs.PathParameter("thumb-id", "identifier of the video").DataType("integer")))
+
+	publicContentWs.Route(publicContentWs.GET("/{video-id}").Filter(videoIdFilter).Filter(publicFilter).To(v.serveVideo).
 		// docs
 		Doc("stream a video").
-		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")))
-
-	contentWs.Route(apiWs.GET("/{video-id}/download").Filter(videoIdFilter).Filter(ownerFilter).To(v.downloadVideo).
+		Param(publicContentWs.PathParameter("video-id", "identifier of the video").DataType("string")))
+	publicContentWs.Route(publicContentWs.GET("/{video-id}/download").Filter(videoIdFilter).Filter(publicFilter).To(v.downloadVideo).
 		// docs
 		Doc("download a video").
 		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")))
-	contentWs.Route(apiWs.GET("/{video-id}/thumbs/{thumb-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveThumb).
+	contentWs.Route(contentWs.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveVideo).
+		// docs
+		Doc("stream a video").
+		Param(contentWs.PathParameter("video-id", "identifier of the video").DataType("string")))
+
+	contentWs.Route(contentWs.GET("/{video-id}/download").Filter(videoIdFilter).Filter(ownerFilter).To(v.downloadVideo).
+		// docs
+		Doc("download a video").
+		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")))
+	contentWs.Route(contentWs.GET("/{video-id}/thumbs/{thumb-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.serveThumb).
 		// docs
 		Doc("get a thumb from video").
-		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")).
-		Param(apiWs.PathParameter("thumb-id", "identifier of the video").DataType("integer")))
+		Param(contentWs.PathParameter("video-id", "identifier of the video").DataType("string")).
+		Param(contentWs.PathParameter("thumb-id", "identifier of the video").DataType("integer")))
 
 	apiWs.Route(apiWs.POST("").To(v.createVideo).
 		// docs
@@ -164,6 +208,7 @@ func (v VideoResource) Register(container *restful.Container) {
 	container.Add(apiWs)
 	container.Add(contentWs)
   container.Add(publicWs)
+  container.Add(publicContentWs)
 }
 
 func (v VideoResource) findVideo(request *restful.Request, response *restful.Response) {
