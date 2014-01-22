@@ -1,5 +1,5 @@
-#!/bin/bash
-PACKAGE=github.com/slspeek/$2
+#!/bin/bash -e
+PACKAGE=github.com/slspeek/$1
 SHORTNAME=$(basename $PACKAGE)
 outfile=test-temp.txt
 go test -v $PACKAGE| tee $outfile 
