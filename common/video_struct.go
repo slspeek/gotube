@@ -12,3 +12,13 @@ type Video struct {
   Public bool
   Thumbs  []string
 }
+// REST Client Video 
+type CVideo struct {
+  Id string
+  Created time.Time
+	Owner, Name, Desc string
+  Public bool
+  Stream  string
+  Download string
+  Thumbs  []string
+}

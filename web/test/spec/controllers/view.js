@@ -6,16 +6,16 @@ describe('Controller: ViewCtrl', function() {
   beforeEach(module('webApp'));
 
   var ViewCtrl,
-    scope, Page;
+    scope, page;
 
   // Initialize the controller and a mock scope
-  beforeEach(inject(function($controller, $rootScope, _Page_) {
+  beforeEach(inject(function($controller, $rootScope, Page){
     scope = $rootScope.$new();
-    Page = _Page_;
+    page = Page;
     ViewCtrl = $controller('ViewCtrl', {
       $scope: scope,
       $routeParams: {VideoId:'345'},
-      Video: {'Id':'345', 'Name':'Novecento', 'Desc':'Italian classic'}
+      Video: {Id:'345', Name:'Novecento', Desc:'Italian classic',Download: '/content/videos/345/download' }
     });
   }));
 
@@ -33,7 +33,7 @@ describe('Controller: ViewCtrl', function() {
   it('should attach downloadURL to the scope', function() {
     expect(scope.downloadURL).toBe('/content/videos/345/download');
   });
-  it('should set the title on Page', function() {
-    expect(Page.title()).toBe('Novecento');
+  it('should set the title on page', function() {
+    expect(page.title()).toBe('Novecento');
   });
 });

@@ -16,12 +16,13 @@
     'com.2fdevs.videogular.plugins.buffering',
     'com.2fdevs.videogular.plugins.poster',
     'ui.bootstrap'
-  ]).run(function($rootScope, authUtil) {
-    $rootScope.obj = {
-      flow: ''
-    };
-    (function() {}(authUtil));
-  })
+  ])
+    .run(function($rootScope, authUtil) {
+      $rootScope.obj = {
+        flow: ''
+      };
+      (function() {}(authUtil));
+    })
 
   .config(function($routeProvider) {
     $routeProvider
@@ -60,11 +61,14 @@
         }
       })
       .when('/public', {
-        templateUrl: 'views/public.html',
-        controller: 'PublicListCtrl',
+        templateUrl: 'views/list.html',
+        controller: 'ListCtrl',
         resolve: {
-          VideoList: function(publicLoader) {
-            return publicLoader();
+          VideoList: function(PublicResource) {
+            return PublicResource.getAll();
+          },
+          UserName: function(authInfoLoader) {
+            return authInfoLoader();
           }
         }
       })
@@ -72,6 +76,10 @@
         templateUrl: 'views/list.html',
         controller: 'ListCtrl',
         resolve: {
+          VideoList: function(VideoResource) {
+            return VideoResource.getAll();
+          },
+
           UserName: function(userLoader) {
             return userLoader();
           }
@@ -92,10 +100,13 @@
       })
       .when('/publicView/:VideoId', {
         templateUrl: 'views/view.html',
-        controller: 'PublicviewCtrl',
+        controller: 'ViewCtrl',
         resolve: {
           Video: function(publicVideo) {
             return publicVideo();
+          },
+          AuthInfo: function(authInfoLoader) {
+            return authInfoLoader();
           }
         }
 
@@ -112,5 +123,17 @@
     };
   }).config(function($httpProvider) {
     $httpProvider.defaults.headers.common['Do-Not-Challenge'] = 'True';
+    $httpProvider.interceptors.push(function() {
+      return {
+        'request': function(config) {
+          if (config.url.indexOf('/auth') !== -1) {
+            config.ignoreAuthModule = true;
+          }
+          // same as above
+          return config;
+        },
+
+      };
+    });
   });
 })();

@@ -5,9 +5,8 @@
     .controller('ViewCtrl', function($scope,  $sce, Video, Page) {
       $scope.video = Video;
       Page.setTitle(Video.Name);
-      var id = Video.Id;
-      $scope.videoURL = $sce.trustAsResourceUrl('/content/videos/' + id);
-      $scope.downloadURL = '/content/videos/' + id + '/download';
+      $scope.videoURL = $sce.trustAsResourceUrl(Video.Stream);
+      $scope.downloadURL = Video.Download;
 
       $scope.stretchModes = [{
         label: 'None',

@@ -7,21 +7,17 @@
       <table class="table table-bordered">
         <tr ng-repeat="video in videoList">
           <td>
-            <a href="/#/view/{{video.Id}}">{{video.Name}}</a>
+            <a href="{{viewUrl(video.Id)}}">{{video.Name}}</a>
           </td>
-          <td>
-            <img width=128 ng-src="/content/videos/{{video.Id}}/thumbs/0" />
-            <img width=128 ng-src="/content/videos/{{video.Id}}/thumbs/1" />
-            <img width=128 ng-src="/content/videos/{{video.Id}}/thumbs/2" />
-            <img width=128 ng-src="/content/videos/{{video.Id}}/thumbs/3" />
-            <img width=128 ng-src="/content/videos/{{video.Id}}/thumbs/4" />
+          <td data-ng-repeat="thumb in video.Thumbs">
+            <img width=128 ng-src="{{thumb}}" />
           </td>
-          <td>
+          <td ng-hide="!loggedOn()" >
             <a href="/#/edit/{{video.Id}}"> 
               <span class="glyphicon glyphicon-pencil"></span>
             </a>
           </td>
-          <td>
+          <td data-ng-hide="!loggedOn()" >
             <a href="/#/remove/{{video.Id}}">
               <span class="glyphicon glyphicon-remove"></span>
             </a>

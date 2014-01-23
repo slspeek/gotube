@@ -6,37 +6,34 @@ describe('Controller: ListCtrl', function() {
   beforeEach(module('webApp'));
 
   var ListCtrl,
-    scope, httpBackend, page;
+    scope, page;
 
   // Initialize the controller and a mock scope
-  beforeEach(inject(function($controller, $rootScope, $httpBackend, Page) {
+  beforeEach(inject(function($controller, $rootScope, Page) {
     page = Page;
-    httpBackend = $httpBackend;
-    httpBackend.when('GET', '/api/videos').respond([]);
     scope = $rootScope.$new();
     ListCtrl = $controller('ListCtrl', {
       $scope: scope,
-      UserName: 'Misko'
+      UserName: 'Misko',
+      VideoList: []
     });
   }));
 
-  afterEach(function() {
-    httpBackend.verifyNoOutstandingExpectation();
-    httpBackend.verifyNoOutstandingRequest();
-  });
 
   it('should add a list of videos to the scope', function() {
-    httpBackend.flush();
     expect(scope.videoList.length).toBe(0);
   });
 
   it('should add username to the scope', function() {
     expect(scope.username).toBe('Misko');
-    httpBackend.flush();
   });
 
   it('should set the title to Listing', function() {
     expect(page.title()).toBe('Listing');
-    httpBackend.flush();
   });
+
+  it('should use private view url', function() {
+   expect(scope.viewUrl(0)).toBe('/#/view/0'); 
+  });
+  
 });

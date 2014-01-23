@@ -82,6 +82,7 @@ func (v VideoResource) IsOwnerFilter(param string) restful.FilterFunction {
 			return
 		}
 		req.SetAttribute("video-object", vid)
+    req.SetAttribute("public", false)
 		chain.ProcessFilter(req, resp)
 	}
 }
@@ -96,12 +97,13 @@ func (v VideoResource) IsPublicFilter(param string) restful.FilterFunction {
 			resp.WriteErrorString(http.StatusNotFound, "Video could not be found.")
 			return
 		}
-		if ! vid.Public {
+		if !vid.Public {
 			resp.AddHeader("Content-Type", "text/plain")
 			resp.WriteErrorString(http.StatusForbidden, "Not public")
 			return
 		}
 		req.SetAttribute("video-object", vid)
+    req.SetAttribute("public", true)
 		chain.ProcessFilter(req, resp)
 	}
 }
@@ -117,7 +119,7 @@ func (v VideoResource) Register(container *restful.Container) {
 
 	publicWs.Path("/public/api/videos").Produces(restful.MIME_JSON, restful.MIME_XML)
 
-  publicContentWs. 
+	publicContentWs.
 		Path("/public/content/videos") /*.Produces("application/octet-stream")*/
 	contentWs.
 		Path("/content/videos") /*.Produces("application/octet-stream")*/
@@ -130,29 +132,28 @@ func (v VideoResource) Register(container *restful.Container) {
 	apiWs.Route(apiWs.GET("").To(v.findAllVideos).
 		// docs
 		Doc("get all your videos").
-		Writes(common.Video{})) // on the response
+		Writes(common.CVideo{})) // on the response
 
 	publicWs.Route(publicWs.GET("").To(v.findPublicVideos).
 		// docs
 		Doc("get all public videos").
-		Writes(common.Video{})) // on the response
+		Writes(common.CVideo{})) // on the response
 
 	apiWs.Route(apiWs.GET("/playlist").To(v.playlist).
 		// docs
-		Doc("get a playlist for all your videos").
-		Writes(common.Video{})) // on the response
+		Doc("get a playlist for all your videos"))
 
 	apiWs.Route(apiWs.GET("/{video-id}").Filter(videoIdFilter).Filter(ownerFilter).To(v.findVideo).
 		// docs
 		Doc("get a video").
 		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")).
-		Writes(common.Video{})) // on the response
+		Writes(common.CVideo{})) // on the response
 
 	publicWs.Route(publicWs.GET("/{video-id}").Filter(videoIdFilter).Filter(publicFilter).To(v.findVideo).
 		// docs
 		Doc("get a public video").
 		Param(publicWs.PathParameter("video-id", "identifier of the video").DataType("string")).
-		Writes(common.Video{})) // on the response
+		Writes(common.CVideo{})) // on the response
 
 	publicContentWs.Route(publicContentWs.GET("/{video-id}/thumbs/{thumb-id}").Filter(videoIdFilter).Filter(publicFilter).To(v.serveThumb).
 		// docs
@@ -207,13 +208,15 @@ func (v VideoResource) Register(container *restful.Container) {
 
 	container.Add(apiWs)
 	container.Add(contentWs)
-  container.Add(publicWs)
-  container.Add(publicContentWs)
+	container.Add(publicWs)
+	container.Add(publicContentWs)
 }
 
 func (v VideoResource) findVideo(request *restful.Request, response *restful.Response) {
-	vid := request.Attribute("video-object")
-	response.WriteEntity(vid)
+	vid := request.Attribute("video-object").(*common.Video)
+  public := request.Attribute("public").(bool)
+	outVideo := videoPostProcess(*vid,public )
+	response.WriteEntity(outVideo)
 }
 
 func (v VideoResource) findAllVideos(request *restful.Request, response *restful.Response) {
@@ -224,7 +227,11 @@ func (v VideoResource) findAllVideos(request *restful.Request, response *restful
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "Error retrieving videos")
 	} else {
-		response.WriteEntity(vid)
+		outVideos := make([]common.CVideo, len(vid))
+		for i, vi := range vid {
+			outVideos[i] = videoPostProcess(vi, false)
+		}
+		response.WriteEntity(outVideos)
 	}
 }
 
@@ -235,7 +242,11 @@ func (v VideoResource) findPublicVideos(request *restful.Request, response *rest
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, "Error retrieving videos")
 	} else {
-		response.WriteEntity(vid)
+		outVideos := make([]common.CVideo, len(vid))
+		for i, vi := range vid {
+			outVideos[i] = videoPostProcess(vi, true)
+		}
+		response.WriteEntity(outVideos)
 	}
 }
 
