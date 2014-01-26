@@ -26,7 +26,7 @@
       $scope.desc = '';
       $scope.success = function() {
         $location.replace();
-        $location.path('list');
+        $location.path('/view/' + $scope.videoId.Id);
       };
       $scope.setFlowTarget = function(target) {
         $scope.obj.flow.opts.target = target;

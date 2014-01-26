@@ -38,6 +38,7 @@ describe('Controller: UploadCtrl', function() {
     beforeEach(inject(function($controller, $rootScope,  _$location_) {
       $location = _$location_;
       scope = $rootScope.$new();
+      scope.videoId = {Id:'42'};
       UploadCtrl = $controller('UploadCtrl', {
         $scope: scope,
         UserName: 'Misko'
@@ -45,9 +46,9 @@ describe('Controller: UploadCtrl', function() {
     }));
 
 
-    it('should set the $location to /list', function() {
+    it('should set the $location to /view/42', function() {
       scope.success();
-      expect($location.path()).toBe('/list');
+      expect($location.path()).toBe('/view/42');
     });
   });
 

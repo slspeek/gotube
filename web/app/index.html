@@ -35,32 +35,35 @@
             <div class="container">
               <div class="navbar navbar-default" role="navigation">
                 <div class="navbar-inner">
-                <div class="navbar-header">
-                  <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                  </button>
-                  <a class="navbar-brand" href="#">Gotube Video Anarchy</a>
-                </div>
-                <div class="navbar-collapse collapse" collapse="false">
-                  <ul class="nav navbar-nav">
-                    <li ng-class="{active: Page.onMyVideos() }" ><a href="/#/list">My videos</a></li>
-                  </ul>
-                  <ul class="nav navbar-nav navbar-right">
-                    <li ng-class="{active: Page.onUpload() }" ><a href="/#/upload">Upload</a></li>
-                  </ul>
+                  <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                      <span class="sr-only">Toggle navigation</span>
+                      <span class="icon-bar"></span>
+                      <span class="icon-bar"></span>
+                      <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">Gotube Video Anarchy</a>
+                  </div>
+                  <div class="navbar-collapse collapse" collapse="false">
+                    <ul class="nav navbar-nav">
+                      <li ng-class="{active: Page.onMyVideos() }" ><a href="/#/list">My videos</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                      <li ng-class="{active: Page.onUpload() }" ><a href="/#/upload">Upload</a></li>
+                    </ul>
                   </div>
                 </div><!--/.nav-collapse -->
               </div>
-              <div ng-view></div>
+
+              <div class="view-animate-container">
+                <div ng-view class="view-animate"></div>
+              </div>
             </div>
           </div>
           <div id="footer">
             <div class="container">
               <center>
-                <p class="text-muted, lead">Copyleft 2013-2014 Steven L. Speek</p>
+                <p class="text-muted">Copyleft 2013-2014 Steven L. Speek</p>
               </center>
             </div>
           </div>
@@ -77,6 +80,7 @@
           <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
           <script src="bower_components/angular-resource/angular-resource.js"></script>
           <script src="bower_components/angular-route/angular-route.js"></script>
+          <script src="bower_components/angular-animate/angular-animate.js"></script>
           <script src="bower_components/angular-http-auth/src/http-auth-interceptor.js"></script>
           <script src="bower_components/angular-authentication/js/angular-authentication.js"></script>
           <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>

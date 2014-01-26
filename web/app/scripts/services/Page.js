@@ -7,7 +7,6 @@ factory('Page', function($rootScope, $location) {
   var onMyVideos = false;
   $rootScope.$on('$routeChangeSuccess', function() {
     var current =  $location.path();
-    console.log('current: ' + current);
     if (current === '/upload') {
       onUpload = true;
     } else {

@@ -7,6 +7,7 @@
     'ngFlow',
     'ngSanitize',
     'ngResource',
+    'ngAnimate',
     'http-auth-interceptor',
     'authentication',
     'base64',
