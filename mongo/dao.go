@@ -1,5 +1,6 @@
 package mongo
 
+import "github.com/slspeek/gotube/common"
 import "labix.org/v2/mgo"
 import "labix.org/v2/mgo/bson"
 
@@ -58,4 +59,13 @@ func (self *Dao) DeleteAll() (err error) {
 
 func (self *Dao) collection() *mgo.Collection {
 	return self.session.DB(self.db).C(self.kind)
+}
+
+type VideoDao struct {
+  *Dao
+}
+
+func (self *VideoDao) Patch(id string, video common.CVideo) (err error) {
+
+  return
 }
