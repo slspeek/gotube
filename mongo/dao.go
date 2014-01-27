@@ -66,6 +66,13 @@ type VideoDao struct {
 }
 
 func (self *VideoDao) Patch(id string, video common.CVideo) (err error) {
-
+  oldVideo := new(common.Video)
+  err = self.Get(id, oldVideo)
+  if err != nil {
+    return
+  }
+  oldVideo.Name = video.Name
+  oldVideo.Desc = video.Desc
+  err = self.Update(id, oldVideo)
   return
 }

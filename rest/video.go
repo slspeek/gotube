@@ -21,7 +21,7 @@ import (
 type VideoResource struct {
 	db          string
 	sess        *mgo.Session
-	videos      *mongo.Dao
+	videos      *mongo.VideoDao
 	auth        *auth.Auth
 	bs          *goblob.BlobService
 	flowService *flow.UploadHandler
@@ -48,7 +48,7 @@ func NewVideoResource(sess *mgo.Session, db string, collecion string, auth *auth
 	v.sess = sess.Copy()
 	v.db = db
 	v.auth = auth
-	v.videos = mongo.NewDao(sess.Copy(), db, collecion)
+	v.videos = &mongo.VideoDao{mongo.NewDao(sess.Copy(), db, collecion)}
 	v.bs = goblob.NewBlobService(sess.Copy(), db, "flowfs")
 	v.flowService = flow.NewUploadHandler(v.bs, v.writeBackBlobId)
 	return v
@@ -301,12 +301,12 @@ func (v *VideoResource) createVideo(request *restful.Request, response *restful.
 
 func (v *VideoResource) updateVideo(request *restful.Request, response *restful.Response) {
 	id := request.PathParameter("video-id")
-	vid := &common.Video{Id: bson.ObjectIdHex(id)}
+	vid := &common.CVideo{Id: id}
 	user := request.Attribute("username")
 	err := request.ReadEntity(&vid)
 	if err == nil {
 		if user == vid.Owner {
-			err := v.videos.Update(vid.Id.Hex(), vid)
+			err := v.videos.Patch(vid.Id, *vid)
 			if err != nil {
 				response.AddHeader("Content-Type", "text/plain")
 				response.WriteErrorString(http.StatusInternalServerError, err.Error())

@@ -1,14 +1,14 @@
 <div class="container">
   <h2>Edit video details</h2>
   <div class="form-group">
-    <label accesskey="t" for="title">Title</label><input ng-model="Video.Name" class="form-control" type="TEXT" />
+    <label accesskey="t" for="title">Title</label><input ng-model="video.Name" class="form-control" type="TEXT" />
   </div>
   <div class="form-group">
-    <label accesskey="d" for="description">Description</label><TEXTAREA ng-model="Video.Desc" class="form-control" type="TEXT" />
+    <label accesskey="d" for="description">Description</label><TEXTAREA ng-model="video.Desc" class="form-control" type="TEXT" />
     </div>
   <div class="form-group">
-    <label accesskey="d" for="description">Public</label><input ng-model="Video.Public" class="form-control" type="CHECKBOX" />
+    <label accesskey="d" for="description">Public</label><input ng-model="video.Public" class="form-control" type="CHECKBOX" />
     </div>
-    <button id="next" class="btn btn-info" ng-click="save()" >Save</button>
+    <button id="save-button" class="btn btn-info" ng-click="save()" >Save</button>
 
 </div>

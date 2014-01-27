@@ -5,9 +5,9 @@
     .controller('EditCtrl', function($scope, $location, UserName, Video, VideoResource, Page) {
       Page.setTitle('Edit');
       $scope.UserName = UserName;
-      $scope.Video = Video;
+      $scope.video = Video;
       $scope.save = function() {
-        VideoResource.update($scope.Video, function() {
+        VideoResource.update($scope.video, function() {
           $location.path('/list');
         });
       };

@@ -15,7 +15,7 @@ describe('Gotube proof of concept scenario', function() {
     element(by.id('login')).click();
   };
 
-
+  var newTitle = 'Life without money';
   it(
     'should upload a video and view it', function() {
       login();
@@ -26,22 +26,31 @@ describe('Gotube proof of concept scenario', function() {
       element(by.id('flow-btn-input-id')).sendKeys(browser.params.testMovie);
       //browser.sleep(3000);
       browser.get('/#/list');
-      //login();
       expect(browser.getCurrentUrl()).toContain('#/list');
-      element(by.linkText('Better life')).click();
-      expect(element(by.binding('{{video.Name}}')).getText()).toBe('Better life');
+      element(by.className('glyphicon-pencil')).click();
+
+
+      expect(browser.getCurrentUrl()).toContain('#/edit');
+      element(by.model('video.Name')).clear();
+      element(by.model('video.Name')).sendKeys(newTitle);
+      element(by.id('save-button')).click();
+
+      //browser.get('/#/list'); 
+      expect(browser.getCurrentUrl()).toContain('#/list');
+      element(by.linkText(newTitle)).click();
+      expect(element(by.binding('{{video.Name}}')).getText()).toBe(newTitle);
       expect(element(by.binding('{{video.Desc}}')).getText()).toBe('Cartoon');
       browser.get('/#/list');
-      //login();
+
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.className('glyphicon-remove')).click();
       expect(browser.getCurrentUrl()).toContain('#/remove');
       element(by.linkText('Remove')).click();
       browser.sleep(1000);
       expect(browser.getCurrentUrl()).toContain('#/list');
-      expect(element(by.tagName('body')).getText()).not.toContain('Better life');
+      expect(element(by.tagName('body')).getText()).not.toContain(newTitle);
 
-    }, 20000);
+    }, 30000);
 
 
 });

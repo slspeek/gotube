@@ -7,13 +7,6 @@ import (
 	"testing"
 )
 
-type Video struct {
-	Id     bson.ObjectId "_id,omitempty"
-	Owner  string
-	Name   string
-	Desc   string
-	BlobId string
-}
 
 func dao(t *testing.T) *Dao {
 	sess, err := mgo.Dial("localhost")
@@ -23,7 +16,7 @@ func dao(t *testing.T) *Dao {
 	return NewDao(sess, "test", "Video")
 }
 
-func createVideo(t *testing.T, v Video) (vout Video, id string) {
+func createVideo(t *testing.T, v common.Video) (vout common.Video, id string) {
 	dao := dao(t)
 	id, err := dao.Create(v)
 	if err != nil {
@@ -33,15 +26,15 @@ func createVideo(t *testing.T, v Video) (vout Video, id string) {
 	return
 }
 
-func createNovencento(t *testing.T) (v Video, id string) {
-	v = Video{"", "steven", "Novecento", "", ""}
+func createNovencento(t *testing.T) (v common.Video, id string) {
+  v = common.Video{Owner:"steven", Name:"Novecento"}
 	return createVideo(t, v)
 }
 
 func TestDao(t *testing.T) {
 	dao := dao(t)
 	_, id := createNovencento(t)
-	reloaded := new(Video)
+	reloaded := new(common.Video)
 	err := dao.Get(id, &reloaded)
 	if err != nil {
 		t.Fatal(err)
@@ -55,7 +48,7 @@ func TestDao(t *testing.T) {
 func TestDaoId(t *testing.T) {
 	dao := dao(t)
 	_, id := createNovencento(t)
-	reloaded := new(Video)
+	reloaded := new(common.Video)
 	err := dao.Get(id, &reloaded)
 	if err != nil {
 		t.Fatal(err)
@@ -78,7 +71,7 @@ func TestUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	reloaded := new(Video)
+	reloaded := new(common.Video)
 	err = dao.Get(id, &reloaded)
 	if err != nil {
 		t.Fatal(err)
@@ -95,12 +88,12 @@ func TestUpdate(t *testing.T) {
 func TestGetAll(t *testing.T) {
 	dao := dao(t)
 	dao.DeleteAll()
-	v1 := Video{"", "steven", "Novecento II", "", ""}
+  v1 := common.Video{Owner:"steven", Name:"Novecento II"}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	reloaded := make([]Video, 1)
+	reloaded := make([]common.Video, 1)
 	err = dao.GetAll(&reloaded)
 	if err != nil {
 		t.Fatal(err)
@@ -118,9 +111,9 @@ func TestGetAll(t *testing.T) {
 func TestFind(t *testing.T) {
 	dao := dao(t)
 	dao.DeleteAll()
-	_, id := createVideo(t, Video{"", "steven", "Novecento II", "", ""})
-	createVideo(t,Video{"", "mike", "Novecento III", "", ""})
-	reloaded := make([]Video, 1)
+  _, id := createVideo(t, common.Video{Owner:"steven", Name:"Novecento II"})
+  createVideo(t,common.Video{Owner:"mike", Name:"Novecento III"})
+	reloaded := make([]common.Video, 1)
   err := dao.Find(bson.M{"owner": "steven"}, &reloaded, []string{})
 	if err != nil {
 		t.Fatal(err)
@@ -140,9 +133,9 @@ func TestFind(t *testing.T) {
 func TestFindOrder(t *testing.T) {
 	dao := dao(t)
 	dao.DeleteAll()
-	createVideo(t, Video{"", "steven", "Novecento II", "", ""})
-  _, id := createVideo(t,Video{"", "mike", "Novecento III", "", ""})
-	reloaded := make([]Video, 2)
+	createVideo(t, common.Video{Owner:"steven", Name:"Novecento II"})
+  _, id := createVideo(t,common.Video{Owner:"mike", Name:"Novecento III"})
+	reloaded := make([]common.Video, 2)
   err := dao.Find(bson.M{}, &reloaded, []string{"owner"})
 	if err != nil {
 		t.Fatal(err)
@@ -168,9 +161,12 @@ func TestVideoDaoPatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	readBack := new(Video)
+	readBack := new(common.Video)
 	err = vdao.Get(id, readBack)
 	if err != nil {
 		t.Fatal(err)
 	}
+  if readBack.Name != "NV" {
+    t.Fatal()
+  }
 }
