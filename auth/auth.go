@@ -8,44 +8,72 @@ import (
 	"net/http"
 )
 
-
-func NewAuthenticator(passwdFile string) Authenticator {
+func NewBasicAuthenticator(passwdFile string) GeneralAuth {
 	provider := auth.HtpasswdFileProvider(passwdFile)
-	return Authenticator{auth.NewBasicAuthenticator("gotube.org", provider)}
+	return auth.NewBasicAuthenticator("gotube.org", provider)
 }
 
-type Authenticator struct {
-	*auth.BasicAuth
+type DigestAuthenticator struct {
+	Digest *auth.DigestAuth
 }
 
-func (auth *Authenticator) AuthService(w http.ResponseWriter, r *http.Request) {
-	userinfo := make(bson.M)
-	username := auth.CheckAuth(r)
-	if username != "" {
-		userinfo["username"] = username
-		b, err := json.Marshal(userinfo)
-		if err != nil {
-			http.Error(w, "Unable to marshal", http.StatusInternalServerError)
-			return
-		}
-		w.Write(b)
-	} else {
-		if r.Header.Get("Do-Not-Challenge") != "True" {
-			w.Header().Add("WWW-Authenticate", "Basic realm=gotube.org")
-		}
+func (d DigestAuthenticator) CheckAuth(r *http.Request) (username string) {
+	username, _ = d.Digest.CheckAuth(r)
+	return
+}
+
+func (d DigestAuthenticator) RequireAuth(w http.ResponseWriter, r *http.Request) {
+  d.Digest.RequireAuth(w,r)
+}
+
+func NewDigestAuthenticator(passwdFile string) GeneralAuth {
+	provider := auth.HtdigestFileProvider(passwdFile)
+	di := DigestAuthenticator{auth.NewDigestAuthenticator("gotube.org", provider)}
+	return di
+}
+
+type GeneralAuth interface {
+	CheckAuth(*http.Request) string
+	RequireAuth(http.ResponseWriter, *http.Request)
+}
+
+func ChallengeOptionally(g GeneralAuth, w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Do-Not-Challenge") == "True" {
 		http.Error(w, "Not authenticated", http.StatusUnauthorized)
+	} else {
+		g.RequireAuth(w, r)
 	}
 }
 
-func (self *Authenticator) Filter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
-	username := self.CheckAuth(req.Request)
-	if username != "" {
-		req.SetAttribute("username", username)
-		chain.ProcessFilter(req, resp)
-	} else {
-		if req.Request.Header.Get("Do-Not-Challenge") != "True" {
-			resp.AddHeader("WWW-Authenticate", "Basic realm=gotube.org")
+func AuthServiceFactory(g GeneralAuth) (auth func(w http.ResponseWriter, r *http.Request)) {
+	auth = func(w http.ResponseWriter, r *http.Request) {
+		userinfo := make(bson.M)
+		username := g.CheckAuth(r)
+		if username != "" {
+			userinfo["username"] = username
+			b, err := json.Marshal(userinfo)
+			if err != nil {
+				http.Error(w, "Unable to marshal", http.StatusInternalServerError)
+				return
+			}
+			w.Write(b)
+		} else {
+			ChallengeOptionally(g, w, r)
 		}
-		resp.WriteErrorString(http.StatusUnauthorized, "No username provided")
 	}
+	return
 }
+
+func FilterFactory(g GeneralAuth) (filter func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain)) {
+	filter = func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+		username := g.CheckAuth(req.Request)
+		if username != "" {
+			req.SetAttribute("username", username)
+			chain.ProcessFilter(req, resp)
+		} else {
+			ChallengeOptionally(g, resp.ResponseWriter, req.Request)
+		}
+	}
+	return
+}
+

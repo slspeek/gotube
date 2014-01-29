@@ -29,6 +29,7 @@ var dbName = flag.String("db", "gotube", "name of the mongodb to use")
 var pwFile = flag.String("pw", "htpasswd", "path of the html password file")
 var webclientDir = flag.String("www", "src/github.com/slspeek/gotube/web/app", "path of the web client")
 var port = flag.Int("port", 8080, "webserver port")
+var digest = flag.Bool("digest", false, "run with digest authentication in stead of basic")
 
 func main() {
 	flag.Parse()
@@ -42,24 +43,29 @@ func main() {
 		panic(err)
 	}
 	fmt.Fprintln(f, syscall.Getpid())
-  f.Close()
+	f.Close()
 
 	r := mux.NewRouter()
 
-	authenticator := auth.NewAuthenticator(*pwFile)
-	videoService := rest.NewVideoResource(sess.Copy(), *dbName, "Video", &authenticator)
+	var authenticator auth.GeneralAuth
+	if *digest {
+		authenticator = auth.NewDigestAuthenticator(*pwFile)
+	} else {
+		authenticator = auth.NewBasicAuthenticator(*pwFile)
+	}
+	videoService := rest.NewVideoResource(sess.Copy(), *dbName, "Video", auth.FilterFactory(authenticator))
 	container := restful.NewContainer()
 	videoService.Register(container)
 	container.Filter(container.OPTIONSFilter)
 
-	r.HandleFunc("/auth", authenticator.AuthService)
+	r.HandleFunc("/auth", auth.AuthServiceFactory(authenticator))
 
 	r.PathPrefix("/api/videos").Handler(container)
 	r.PathPrefix("/public/api/videos").Handler(container)
 	r.PathPrefix("/public/content/videos").Handler(container)
 	r.PathPrefix("/content/videos").Handler(container)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(*webclientDir)))
-  listenAddress := fmt.Sprintf(":%d", *port)
+	listenAddress := fmt.Sprintf(":%d", *port)
 	if !*noSsl {
 		log.Fatal(http.ListenAndServeTLS(listenAddress, "cert.pem", "key.pem", r))
 	} else {

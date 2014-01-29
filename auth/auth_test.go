@@ -11,7 +11,7 @@ func TestAuthFilterChallenges(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/api/videos", nil)
 	recorder := httptest.NewRecorder()
 
-	auth := NewAuthenticator("../test_htpasswd")
+	auth := NewBasicAuthenticator("../test_htpasswd")
 
 	ws := new(restful.WebService)
 
@@ -19,7 +19,7 @@ func TestAuthFilterChallenges(t *testing.T) {
 
 	dummyTarget := func(req *restful.Request, resp *restful.Response) {}
 
-	ws.Route(ws.GET("").Filter(auth.Filter).To(dummyTarget))
+	ws.Route(ws.GET("").Filter(FilterFactory(auth)).To(dummyTarget))
 
 	container := restful.NewContainer()
 
@@ -27,7 +27,8 @@ func TestAuthFilterChallenges(t *testing.T) {
 
 	container.ServeHTTP(recorder, req)
 
-	if recorder.Header().Get("WWW-Authenticate") != "Basic realm=gotube.org" {
+	if recorder.Header().Get("WWW-Authenticate") != `Basic realm="gotube.org"` {
+	  t.Log(recorder.Header().Get("WWW-Authenticate"))
 		t.Fatal("Should challenge")
 	}
 
@@ -37,7 +38,7 @@ func TestAuthFilterDoesNotChallenge(t *testing.T) {
 	req.Header.Add("Do-Not-Challenge", "True")
 	recorder := httptest.NewRecorder()
 
-	auth := NewAuthenticator("../test_htpasswd")
+	auth := NewBasicAuthenticator("../test_htpasswd")
 
 	ws := new(restful.WebService)
 
@@ -45,7 +46,7 @@ func TestAuthFilterDoesNotChallenge(t *testing.T) {
 
 	dummyTarget := func(req *restful.Request, resp *restful.Response) {}
 
-	ws.Route(ws.GET("").Filter(auth.Filter).To(dummyTarget))
+	ws.Route(ws.GET("").Filter(FilterFactory(auth)).To(dummyTarget))
 
 	container := restful.NewContainer()
 
