@@ -253,9 +253,20 @@ func TestNotAuthorizedUpdate(t *testing.T) {
 
 func TestSuccessUpdate(t *testing.T) {
 	id := createNovecento(t)
-	req, _ := http.NewRequest("PUT", "/api/videos/"+id, strings.NewReader(`{"Owner":"steven","Name":"As it is in heaven"}`))
+  req, _ := http.NewRequest("PUT", "/api/videos/"+id, strings.NewReader(`{"Owner":"steven","Public":true,"Name":"As it is in heaven"}`))
 	req.Header["Content-Type"] = []string{"application/json"}
 	verifyRequestReturnsOK(req, t)
+  reloaded := new(common.Video)
+  err := dao(t).Get(id, reloaded)
+  if err != nil {
+    t.Fatal(err)
+  }
+  if reloaded.Name != "As it is in heaven" {
+    t.Fatal()
+  }
+  if reloaded.Public != true {
+    t.Fatal()
+  }
 }
 
 //Remove methods tests
@@ -398,6 +409,7 @@ func TestSuccessDownload(t *testing.T) {
 }
 
 func TestPublicFindAll(t *testing.T) {
+	dao(t).DeleteAll()
 	createNovecento(t)
 	req, _ := http.NewRequest("GET", "/public/api/videos", nil)
 	rw := verifyRequestReturnsOK(req, t)

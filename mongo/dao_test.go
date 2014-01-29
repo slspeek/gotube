@@ -7,7 +7,6 @@ import (
 	"testing"
 )
 
-
 func dao(t *testing.T) *Dao {
 	sess, err := mgo.Dial("localhost")
 	if err != nil {
@@ -22,12 +21,12 @@ func createVideo(t *testing.T, v common.Video) (vout common.Video, id string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-  vout = v
+	vout = v
 	return
 }
 
 func createNovencento(t *testing.T) (v common.Video, id string) {
-  v = common.Video{Owner:"steven", Name:"Novecento"}
+	v = common.Video{Owner: "steven", Name: "Novecento"}
 	return createVideo(t, v)
 }
 
@@ -88,7 +87,7 @@ func TestUpdate(t *testing.T) {
 func TestGetAll(t *testing.T) {
 	dao := dao(t)
 	dao.DeleteAll()
-  v1 := common.Video{Owner:"steven", Name:"Novecento II"}
+	v1 := common.Video{Owner: "steven", Name: "Novecento II"}
 	id, err := dao.Create(v1)
 	if err != nil {
 		t.Fatal(err)
@@ -111,10 +110,10 @@ func TestGetAll(t *testing.T) {
 func TestFind(t *testing.T) {
 	dao := dao(t)
 	dao.DeleteAll()
-  _, id := createVideo(t, common.Video{Owner:"steven", Name:"Novecento II"})
-  createVideo(t,common.Video{Owner:"mike", Name:"Novecento III"})
+	_, id := createVideo(t, common.Video{Owner: "steven", Name: "Novecento II"})
+	createVideo(t, common.Video{Owner: "mike", Name: "Novecento III"})
 	reloaded := make([]common.Video, 1)
-  err := dao.Find(bson.M{"owner": "steven"}, &reloaded, []string{})
+	err := dao.Find(bson.M{"owner": "steven"}, &reloaded, []string{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,10 +132,10 @@ func TestFind(t *testing.T) {
 func TestFindOrder(t *testing.T) {
 	dao := dao(t)
 	dao.DeleteAll()
-	createVideo(t, common.Video{Owner:"steven", Name:"Novecento II"})
-  _, id := createVideo(t,common.Video{Owner:"mike", Name:"Novecento III"})
+	createVideo(t, common.Video{Owner: "steven", Name: "Novecento II"})
+	_, id := createVideo(t, common.Video{Owner: "mike", Name: "Novecento III"})
 	reloaded := make([]common.Video, 2)
-  err := dao.Find(bson.M{}, &reloaded, []string{"owner"})
+	err := dao.Find(bson.M{}, &reloaded, []string{"owner"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +155,7 @@ func TestVideoDaoPatch(t *testing.T) {
 	_, id := createNovencento(t)
 	dao := dao(t)
 	vdao := VideoDao{dao}
-	vInput := common.CVideo{Id: id, Name: "NV", Thumbs: []string{"foo", "bar"}}
+	vInput := common.CVideo{Id: id, Public: true, Name: "NV", Thumbs: []string{"foo", "bar"}}
 	err := vdao.Patch(id, vInput)
 	if err != nil {
 		t.Fatal(err)
@@ -166,7 +165,10 @@ func TestVideoDaoPatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-  if readBack.Name != "NV" {
-    t.Fatal()
-  }
+	if readBack.Public != true {
+		t.Fatal()
+	}
+	if readBack.Name != "NV" {
+		t.Fatal()
+	}
 }

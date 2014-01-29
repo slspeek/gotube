@@ -73,6 +73,7 @@ func (self *VideoDao) Patch(id string, video common.CVideo) (err error) {
   }
   oldVideo.Name = video.Name
   oldVideo.Desc = video.Desc
+  oldVideo.Public = video.Public
   err = self.Update(id, oldVideo)
   return
 }

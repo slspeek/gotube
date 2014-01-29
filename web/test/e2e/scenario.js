@@ -28,9 +28,8 @@ describe('Gotube proof of concept scenario', function() {
       browser.get('/#/list');
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.className('glyphicon-pencil')).click();
-
-
       expect(browser.getCurrentUrl()).toContain('#/edit');
+      expect(element(by.model('video.Public')).isSelected()).toBe(false);
       element(by.model('video.Name')).clear();
       element(by.model('video.Name')).sendKeys(newTitle);
       element(by.id('save-button')).click();
@@ -38,10 +37,26 @@ describe('Gotube proof of concept scenario', function() {
       //browser.get('/#/list'); 
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.linkText(newTitle)).click();
+      expect(browser.getCurrentUrl()).toContain('#/view');
       expect(element(by.binding('{{video.Name}}')).getText()).toBe(newTitle);
       expect(element(by.binding('{{video.Desc}}')).getText()).toBe('Cartoon');
-      browser.get('/#/list');
+      browser.get('/#/');
+      expect(browser.getCurrentUrl()).toContain('#/public');
+      expect(element(by.tagName('body')).getText()).not.toContain(newTitle);
 
+      browser.get('/#/list');
+      expect(browser.getCurrentUrl()).toContain('#/list');
+      element(by.className('glyphicon-pencil')).click();
+      expect(browser.getCurrentUrl()).toContain('#/edit');
+      element(by.model('video.Public')).click();
+      expect(element(by.model('video.Public')).isSelected()).toBe(true);
+      element(by.id('save-button')).click();
+
+      browser.get('/#/');
+      expect(browser.getCurrentUrl()).toContain('#/public');
+      expect(element(by.tagName('body')).getText()).toContain(newTitle);
+
+      browser.get('/#/list');
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.className('glyphicon-remove')).click();
       expect(browser.getCurrentUrl()).toContain('#/remove');
