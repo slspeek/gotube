@@ -5,7 +5,6 @@ import (
 	"github.com/slspeek/flowgo"
 	"github.com/slspeek/go-restful"
 	"github.com/slspeek/goblob"
-	"github.com/slspeek/gotube/auth"
 	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
 	"github.com/slspeek/gotube/thumb"
@@ -17,12 +16,11 @@ import (
 	"strconv"
 	"time"
 )
-
 type VideoResource struct {
 	db          string
 	sess        *mgo.Session
 	videos      *mongo.VideoDao
-	auth        *auth.Auth
+	authFilter  restful.FilterFunction
 	bs          *goblob.BlobService
 	flowService *flow.UploadHandler
 }
@@ -43,11 +41,11 @@ func (v *VideoResource) writeBackBlobId(r *http.Request, blobId string) {
 	v.generateThumbs(*vid, 5, 128)
 }
 
-func NewVideoResource(sess *mgo.Session, db string, collecion string, auth *auth.Auth) *VideoResource {
+func NewVideoResource(sess *mgo.Session, db string, collecion string, auth restful.FilterFunction) *VideoResource {
 	v := new(VideoResource)
 	v.sess = sess.Copy()
 	v.db = db
-	v.auth = auth
+	v.authFilter = auth
 	v.videos = &mongo.VideoDao{mongo.NewDao(sess.Copy(), db, collecion)}
 	v.bs = goblob.NewBlobService(sess.Copy(), db, "flowfs")
 	v.flowService = flow.NewUploadHandler(v.bs, v.writeBackBlobId)
@@ -203,8 +201,8 @@ func (v VideoResource) Register(container *restful.Container) {
 		Doc("delete a video").
 		Param(apiWs.PathParameter("video-id", "identifier of the video").DataType("string")))
 
-	apiWs.Filter(v.auth.Filter)
-	contentWs.Filter(v.auth.Filter)
+	apiWs.Filter(v.authFilter)
+	contentWs.Filter(v.authFilter)
 
 	container.Add(apiWs)
 	container.Add(contentWs)

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/slspeek/flowgo"
 	"github.com/slspeek/go-restful"
-	"github.com/slspeek/gotube/auth"
 	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
 	"io"
@@ -260,7 +259,7 @@ func BenchmarkConcurrentDownloads(b *testing.B) {
 	bs := blobService()
 	defer bs.Close()
 	container := restful.NewContainer()
-	vr := NewVideoResource(sess, "test", "Video", &auth.Auth{allwaysSteven})
+	vr := NewVideoResource(sess, "test", "Video", allwaysSteven)
 	vr.Register(container)
 	ts := httptest.NewServer(container)
 	defer ts.Close()

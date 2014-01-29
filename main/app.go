@@ -47,7 +47,7 @@ func main() {
 	r := mux.NewRouter()
 
 	authenticator := auth.NewAuthenticator(*pwFile)
-	videoService := rest.NewVideoResource(sess.Copy(), *dbName, "Video", &auth.Auth{authenticator.CheckAuth})
+	videoService := rest.NewVideoResource(sess.Copy(), *dbName, "Video", &authenticator)
 	container := restful.NewContainer()
 	videoService.Register(container)
 	container.Filter(container.OPTIONSFilter)

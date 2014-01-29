@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/slspeek/go-restful"
 	"github.com/slspeek/goblob"
-	"github.com/slspeek/gotube/auth"
 	"github.com/slspeek/gotube/common"
 	"github.com/slspeek/gotube/mongo"
 	"io/ioutil"
@@ -18,9 +17,25 @@ import (
 var (
 	NOVECENTO      = common.Video{Owner: "steven", Name: "Novecento", Desc: "Italian classic"}
 	PUBLIC_FICTION = common.Video{Owner: "steven", Public: true, Name: "Public Fiction", Desc: "Unreal classic"}
-	allwaysSteven  = func(*http.Request) string { return "steven" }
-	allwaysNobody  = func(*http.Request) string { return "" }
+	allwaysSteven  = filter(func(*http.Request) string { return "steven" })
+	allwaysNobody  = filter(func(*http.Request) string { return "" })
 )
+
+func filter(checker func(*http.Request) string) (f restful.FilterFunction) {
+  f = func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+	username := checker(req.Request)
+	if username != "" {
+		req.SetAttribute("username", username)
+		chain.ProcessFilter(req, resp)
+	} else {
+		if req.Request.Header.Get("Do-Not-Challenge") != "True" {
+			resp.AddHeader("WWW-Authenticate", "Basic realm=gotube.org")
+		}
+		resp.WriteErrorString(http.StatusUnauthorized, "No username provided")
+	}
+}
+  return
+}
 
 func blobService() (bs *goblob.BlobService) {
 	s, err := mgo.Dial("localhost")
@@ -68,19 +83,19 @@ func createPublicFiction(t *testing.T) (id string) {
 	return
 }
 
-func videoResource(t *testing.T, checker auth.CheckAuthFunc) *VideoResource {
+func videoResource(t *testing.T, checker restful.FilterFunction) *VideoResource {
 	sess, err := mgo.Dial("localhost")
 	if err != nil {
 		t.Fatal(err)
 	}
-	return NewVideoResource(sess, "test", "Video", &auth.Auth{checker})
+	return NewVideoResource(sess, "test", "Video", checker)
 }
 
 func videoTestServer(t *testing.T) *httptest.Server {
 	return httptest.NewServer(loadedContainer(t, allwaysSteven))
 }
 
-func loadedContainer(t *testing.T, checker auth.CheckAuthFunc) *restful.Container {
+func loadedContainer(t *testing.T, checker restful.FilterFunction) *restful.Container {
 	vr := videoResource(t, checker)
 	container := restful.NewContainer()
 	vr.Register(container)
