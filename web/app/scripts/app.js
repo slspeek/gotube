@@ -120,7 +120,8 @@
       maxChunkRetries: 2,
       testChunks: true,
       chunkRetryInterval: 5000,
-      simultaneousUploads: 4
+      simultaneousUploads: 4,
+      withCredentials: true
     };
   }).config(function($httpProvider) {
     $httpProvider.defaults.headers.common['Do-Not-Challenge'] = 'True';
