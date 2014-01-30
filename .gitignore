@@ -16,3 +16,5 @@ test-data
 web/app/direct
 web/cobertura
 web/coverage
+bin
+gotube.pid

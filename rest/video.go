@@ -382,7 +382,8 @@ func (v *VideoResource) serveThumb(request *restful.Request, response *restful.R
 		return
 	}
 
-	http.ServeContent(response.ResponseWriter, request.Request, "", blobHandle.UploadDate(), blobHandle)
+	//http.ServeContent(response.ResponseWriter, request.Request, "", blobHandle.UploadDate(), blobHandle)
+	http.ServeContent(response.ResponseWriter, request.Request, "", time.Now(), blobHandle)
 }
 func (v *VideoResource) serveVideo(request *restful.Request, response *restful.Response) {
 	video := request.Attribute("video-object").(*common.Video)
@@ -403,7 +404,8 @@ func (v *VideoResource) serveVideo(request *restful.Request, response *restful.R
 		return
 	}
 
-	http.ServeContent(response.ResponseWriter, request.Request, "", blobHandle.UploadDate(), blobHandle)
+  //http.ServeContent(response.ResponseWriter, request.Request, "", blobHandle.UploadDate(), blobHandle)
+  http.ServeContent(response.ResponseWriter, request.Request, "", time.Now(), blobHandle)
 }
 
 func (v *VideoResource) downloadVideo(request *restful.Request, response *restful.Response) {

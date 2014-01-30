@@ -38,6 +38,7 @@ type GeneralAuth interface {
 }
 
 func ChallengeOptionally(g GeneralAuth, w http.ResponseWriter, r *http.Request) {
+  //w.Header().Set("Last-Modified", time.Now().Format(time.RFC1123))
 	if r.Header.Get("Do-Not-Challenge") == "True" {
 		http.Error(w, "Not authenticated", http.StatusUnauthorized)
 	} else {

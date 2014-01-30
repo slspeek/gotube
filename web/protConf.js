@@ -1,9 +1,8 @@
-// An example configuration file.
 'use strict';
 var path = require('path');
 
 var abs = function(relative) {
-  var r= path.resolve(relative);
+  var r = path.resolve(relative);
   console.log(r);
   return r;
 };
@@ -13,7 +12,8 @@ exports.config = {
   seleniumAddress: 'http://localhost:4444/wd/hub',
 
 
-  baseUrl: 'http://localhost:8080',
+  framework: ['jasmine', 'jasmine-reporters'],
+  baseUrl: 'http://localhost:8484',
 
   // Capabilities to be passed to the webdriver instance.
   capabilities: {
@@ -27,7 +27,12 @@ exports.config = {
   params: {
     testMovie: abs('../test-data/BetterLife_HighQuality.ogv')
   },
-  
+
+ /* onPrepare: function() {*/
+    //jasmine.getEnv().addReporter(new jasmine.JUnitXmlReporter(
+      //'junitxml/', true, true));
+  /*},*/
+
 
   // Options to be passed to Jasmine-node.
   jasmineNodeOpts: {
