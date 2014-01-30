@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"time"
 )
+
 type VideoResource struct {
 	db          string
 	sess        *mgo.Session
@@ -80,7 +81,7 @@ func (v VideoResource) IsOwnerFilter(param string) restful.FilterFunction {
 			return
 		}
 		req.SetAttribute("video-object", vid)
-    req.SetAttribute("public", false)
+		req.SetAttribute("public", false)
 		chain.ProcessFilter(req, resp)
 	}
 }
@@ -101,7 +102,7 @@ func (v VideoResource) IsPublicFilter(param string) restful.FilterFunction {
 			return
 		}
 		req.SetAttribute("video-object", vid)
-    req.SetAttribute("public", true)
+		req.SetAttribute("public", true)
 		chain.ProcessFilter(req, resp)
 	}
 }
@@ -212,8 +213,8 @@ func (v VideoResource) Register(container *restful.Container) {
 
 func (v VideoResource) findVideo(request *restful.Request, response *restful.Response) {
 	vid := request.Attribute("video-object").(*common.Video)
-  public := request.Attribute("public").(bool)
-	outVideo := videoPostProcess(*vid,public )
+	public := request.Attribute("public").(bool)
+	outVideo := videoPostProcess(*vid, public)
 	response.WriteEntity(outVideo)
 }
 
@@ -404,8 +405,8 @@ func (v *VideoResource) serveVideo(request *restful.Request, response *restful.R
 		return
 	}
 
-  //http.ServeContent(response.ResponseWriter, request.Request, "", blobHandle.UploadDate(), blobHandle)
-  http.ServeContent(response.ResponseWriter, request.Request, "", time.Now(), blobHandle)
+	//http.ServeContent(response.ResponseWriter, request.Request, "", blobHandle.UploadDate(), blobHandle)
+	http.ServeContent(response.ResponseWriter, request.Request, "", time.Now(), blobHandle)
 }
 
 func (v *VideoResource) downloadVideo(request *restful.Request, response *restful.Response) {

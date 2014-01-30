@@ -7,6 +7,7 @@ import (
 
 func TestVideoPostprocess(t *testing.T) {
 	vIn := NOVECENTO
+  vIn.Public = true
 	vIn.BlobId = "foo"
   vIn.Thumbs = []string{"foo", "bar"}
 	vIn.Id = bson.NewObjectId()
@@ -34,5 +35,8 @@ func TestVideoPostprocess(t *testing.T) {
 	}
   if out.Download != "/public" + expected + "/download" {
     t.Fatal("Private Download: ", out.Download)
+  }
+  if out.Public != true {
+    t.Fatal("Should be public")
   }
 }

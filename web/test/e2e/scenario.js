@@ -24,7 +24,6 @@ describe('Gotube proof of concept scenario', function() {
       element(by.model('name')).sendKeys('Better life');
       element(by.id('desc')).sendKeys('Cartoon');
       element(by.id('flow-btn-input-id')).sendKeys(browser.params.testMovie);
-      //browser.sleep(3000);
       browser.get('/#/list');
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.className('glyphicon-pencil')).click();
@@ -34,7 +33,6 @@ describe('Gotube proof of concept scenario', function() {
       element(by.model('video.Name')).sendKeys(newTitle);
       element(by.id('save-button')).click();
 
-      //browser.get('/#/list'); 
       expect(browser.getCurrentUrl()).toContain('#/list');
       element(by.linkText(newTitle)).click();
       expect(browser.getCurrentUrl()).toContain('#/view');
@@ -51,6 +49,12 @@ describe('Gotube proof of concept scenario', function() {
       element(by.model('video.Public')).click();
       expect(element(by.model('video.Public')).isSelected()).toBe(true);
       element(by.id('save-button')).click();
+
+      expect(browser.getCurrentUrl()).toContain('#/list');
+      element(by.className('glyphicon-pencil')).click();
+      expect(browser.getCurrentUrl()).toContain('#/edit');
+      //browser.sleep(5001);
+      //expect(element(by.model('video.Public')).isSelected()).toBe(true);
 
       browser.get('/#/');
       expect(browser.getCurrentUrl()).toContain('#/public');
