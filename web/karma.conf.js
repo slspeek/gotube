@@ -36,7 +36,7 @@ module.exports = function(config) {
       'app/components/ng-flow/src/directives/transfers.js',
       'app/components/ng-flow/src/ng-flow.js',
       'app/components/ng-flow/src/provider.js',
-      'app/bower_components/videogular/app/scripts/com/2fdevs/videogular/videogular.js',
+      'app/bower_components/videogular/videogular.js',
       'app/bower_components/videogular-buffering/buffering.js',
       'app/bower_components/videogular-poster/poster.js',
       'app/bower_components/videogular-overlay-play/overlay-play.js',
@@ -70,7 +70,8 @@ module.exports = function(config) {
     // - Safari (only Mac)
     // - PhantomJS
     // - IE (only Windows)
-    browsers: ['Chrome', 'Firefox'],
+    //browsers: ['Chrome', 'Firefox'],
+    browsers: ['Chrome'],
 
 
     // Continuous Integration mode

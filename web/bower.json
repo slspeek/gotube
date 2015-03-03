@@ -4,6 +4,7 @@
   "dependencies": {
     "angular": "~1.2.10",
     "angular-bootstrap": "~0.10.0",
+		"bootstrap": "*",
     "jquery": "~1.9.1",
     "es5-shim": "~2.0.8",
     "angular-cookies": "*",
