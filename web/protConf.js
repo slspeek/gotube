@@ -12,13 +12,13 @@ exports.config = {
   seleniumAddress: 'http://localhost:4444/wd/hub',
 
 
-  framework: ['jasmine', 'jasmine-reporters'],
+  //framework: ['jasmine', 'jasmine-reporters'],
   baseUrl: 'http://localhost:8484',
 
   // Capabilities to be passed to the webdriver instance.
-  capabilities: {
-    'browserName': 'firefox'
-  },
+  //capabilities: {
+    //'browserName': 'firefox'
+  //},
 
   // Spec patterns are relative to the current working directly when
   // protractor is called.
